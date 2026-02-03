@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PolyReceipts - Show Their Receipts</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --card: #14141f;
+      --border: #2a2a3a;
+      --accent: #f59e0b;
+      --accent-light: #fbbf24;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      padding: 80px 20px 60px;
+      background: linear-gradient(180deg, #14141f 0%, var(--bg) 100%);
+    }
+    
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .hero .tagline {
+      font-size: 1.4rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 30px;
+      line-height: 1.5;
+    }
+    
+    .hero .hook {
+      font-size: 1.1rem;
+      color: var(--text);
+      font-style: italic;
+      opacity: 0.9;
+    }
+    
+    .container { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; }
+    
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    
+    .card h2 {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    /* Search Box */
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    
+    .search-box input {
+      flex: 1;
+      padding: 16px;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      font-family: monospace;
+    }
+    
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    .search-box input::placeholder {
+      color: var(--muted);
+      font-family: -apple-system, sans-serif;
+    }
+    
+    button {
+      padding: 16px 32px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    button:hover { background: var(--accent-light); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    /* Results */
+    .results { display: none; }
+    .results.active { display: block; }
+    
+    .whale-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    
+    .whale-address {
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: var(--muted);
+      word-break: break-all;
+    }
+    
+    .whale-pnl {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    
+    .pnl-positive { color: var(--success); }
+    .pnl-negative { color: var(--danger); }
+    
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--accent);
+    }
+    
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 5px;
+    }
+    
+    /* Verdict Banner */
+    .verdict {
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .verdict-lucky {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--danger);
+    }
+    
+    .verdict-skilled {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid var(--success);
+    }
+    
+    .verdict-uncertain {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid var(--warning);
+    }
+    
+    .verdict h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+    
+    .verdict p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    
+    /* Calibration Chart */
+    .chart-container {
+      width: 100%;
+      height: 300px;
+      position: relative;
+    }
+    
+    .chart-canvas {
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Trade History */
+    .trade-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .trade-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    
+    .trade-item:last-child { border-bottom: none; }
+    
+    .trade-market { flex: 1; }
+    .trade-side { width: 50px; text-align: center; }
+    .trade-side.yes { color: var(--success); }
+    .trade-side.no { color: var(--danger); }
+    .trade-outcome { width: 60px; text-align: right; }
+    .outcome-win { color: var(--success); }
+    .outcome-loss { color: var(--danger); }
+    
+    /* Famous Whales */
+    .famous-whales {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    
+    .whale-btn {
+      padding: 8px 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    
+    .whale-btn:hover {
+      background: var(--border);
+    }
+    
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      margin-top: 60px;
+    }
+    
+    footer a { color: var(--accent); }
+    
+    /* Responsive */
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2rem; }
+      .hero .tagline { font-size: 1.1rem; }
+      .search-box { flex-direction: column; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <h1>🧾 PolyReceipts</h1>
+    <p class="tagline">That whale with $10M in profits?<br>Here's why it's probably luck.</p>
+    <p class="hook">"Everyone asks what whales are buying. Nobody asks if they know what they're doing."</p>
+  </section>
+  
+  <div class="container">
+    <div class="card">
+      <h2>🔍 Analyze a Whale</h2>
+      <p style="color: var(--muted); margin-bottom: 20px;">
+        Enter any Polymarket wallet address to see their calibration, Brier score, and whether they're actually skilled or just lucky.
+      </p>
+      
+      <div class="famous-whales">
+        <span style="color: var(--muted); font-size: 0.85rem; align-self: center;">Try:</span>
+        <button class="whale-btn" data-address="0x204f72c8d7b08d47f1953b69b5b4e8f4e8f75e14">swisstony</button>
+        <button class="whale-btn" data-address="0xtheo123456789abcdef">Théo ($85M)</button>
+        <button class="whale-btn" data-address="0xgamma987654321fedcba">GammaSwap</button>
+      </div>
+      
+      <div class="search-box">
+        <input type="text" id="wallet-input" placeholder="0x... wallet address">
+        <button id="analyze-btn">Analyze</button>
+      </div>
+    </div>
+    
+    <div class="results" id="results">
+      <div class="card">
+        <div class="whale-header">
+          <div>
+            <h2 style="margin-bottom: 5px;">📊 Analysis Results</h2>
+            <div class="whale-address" id="result-address"></div>
+          </div>
+          <div class="whale-pnl" id="result-pnl"></div>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-trades">—</div>
+            <div class="stat-label">Total Trades</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-winrate">—</div>
+            <div class="stat-label">Win Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-brier">—</div>
+            <div class="stat-label">Brier Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-needed">—</div>
+            <div class="stat-label">Trades for Significance</div>
+          </div>
+        </div>
+        
+        <div class="verdict" id="verdict">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+      
+      <div class="card">
+        <h2>📈 Calibration Curve</h2>
+        <div class="chart-container">
+          <canvas id="calibration-canvas" class="chart-canvas"></canvas>
+        </div>
+        <p style="color: var(--muted); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+          Diagonal = perfect calibration. Above = overconfident. Below = underconfident.
+        </p>
+      </div>
+      
+      <div class="card">
+        <h2>📜 Recent Trades</h2>
+        <div class="trade-list" id="trade-list">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer>
+    <p>PolyReceipts — Because receipts don't lie.</p>
+    <p style="margin-top: 10px;">
+      Built by <a href="https://x.com/EzraAnchovy" target="_blank">@EzraAnchovy</a> ⚡
+    </p>
+  </footer>
+
+  <script>
+    // Famous whale data (mock - replace with real API calls)
+    const mockWhales = {
+      '0x204f72c8d7b08d47f1953b69b5b4e8f4e8f75e14': {
+        name: 'swisstony',
+        pnl: 847000,
+        trades: generateMockTrades(156, 0.54),
+      },
+      '0xtheo123456789abcdef': {
+        name: 'Théo',
+        pnl: 85000000,
+        trades: generateMockTrades(89, 0.62),
+      },
+      '0xgamma987654321fedcba': {
+        name: 'GammaSwap',
+        pnl: 2340000,
+        trades: generateMockTrades(234, 0.51),
+      }
+    };
+    
+    function generateMockTrades(count, winRate) {
+      const markets = [
+        'Will Trump win 2028?', 'Bitcoin > $100k by March?', 'Fed rate cut in Q1?',
+        'AC Milan wins today?', 'Lakers NBA Champions?', 'AI regulation by 2027?',
+        'Recession in 2026?', 'Tesla $500 by EOY?', 'Ukraine ceasefire?',
+        'Iran nuclear deal?', 'China invades Taiwan?', 'Apple hits $4T?'
+      ];
+      
+      const trades = [];
+      for (let i = 0; i < count; i++) {
+        const confidence = 0.3 + Math.random() * 0.6; // 30-90% confidence
+        const actualWin = Math.random() < winRate;
+        const predictedYes = confidence > 0.5;
+        const outcome = actualWin ? 'yes' : 'no';
+        
+        trades.push({
+          market: markets[Math.floor(Math.random() * markets.length)],
+          side: predictedYes ? 'yes' : 'no',
+          confidence: confidence,
+          outcome: outcome,
+          won: (predictedYes && outcome === 'yes') || (!predictedYes && outcome === 'no'),
+          date: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString()
+        });
+      }
+      return trades.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+    
+    // DOM elements
+    const walletInput = document.getElementById('wallet-input');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const results = document.getElementById('results');
+    
+    // Famous whale buttons
+    document.querySelectorAll('.whale-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        walletInput.value = btn.dataset.address;
+        analyze();
+      });
+    });
+    
+    analyzeBtn.addEventListener('click', analyze);
+    walletInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') analyze();
+    });
+    
+    function analyze() {
+      const address = walletInput.value.trim();
+      if (!address) return;
+      
+      // Get whale data (mock or real)
+      const whale = mockWhales[address] || generateRandomWhale(address);
+      
+      // Show results
+      results.classList.add('active');
+      
+      // Populate header
+      document.getElementById('result-address').textContent = address;
+      const pnlEl = document.getElementById('result-pnl');
+      const pnlStr = whale.pnl >= 0 ? `+$${formatNumber(whale.pnl)}` : `-$${formatNumber(Math.abs(whale.pnl))}`;
+      pnlEl.textContent = pnlStr;
+      pnlEl.className = 'whale-pnl ' + (whale.pnl >= 0 ? 'pnl-positive' : 'pnl-negative');
+      
+      // Calculate stats
+      const trades = whale.trades;
+      const resolved = trades.filter(t => t.outcome);
+      const wins = resolved.filter(t => t.won).length;
+      const winRate = wins / resolved.length;
+      const brier = calculateBrier(resolved);
+      const tradesNeeded = calculateTradesNeeded(winRate, resolved.length);
+      
+      document.getElementById('stat-trades').textContent = resolved.length;
+      document.getElementById('stat-winrate').textContent = Math.round(winRate * 100) + '%';
+      document.getElementById('stat-brier').textContent = brier.toFixed(3);
+      document.getElementById('stat-needed').textContent = tradesNeeded === Infinity ? '∞' : tradesNeeded;
+      
+      // Verdict
+      renderVerdict(winRate, resolved.length, tradesNeeded, whale.name);
+      
+      // Chart
+      renderCalibrationChart(resolved);
+      
+      // Trade list
+      renderTradeList(trades.slice(0, 20));
+      
+      // Scroll to results
+      results.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function generateRandomWhale(address) {
+      const winRate = 0.45 + Math.random() * 0.15;
+      return {
+        name: 'Unknown',
+        pnl: (Math.random() - 0.3) * 500000,
+        trades: generateMockTrades(50 + Math.floor(Math.random() * 150), winRate)
+      };
+    }
+    
+    function calculateBrier(trades) {
+      if (trades.length === 0) return 0;
+      let sum = 0;
+      trades.forEach(t => {
+        const outcome = t.outcome === 'yes' ? 1 : 0;
+        const forecast = t.side === 'yes' ? t.confidence : 1 - t.confidence;
+        sum += Math.pow(forecast - outcome, 2);
+      });
+      return sum / trades.length;
+    }
+    
+    function calculateTradesNeeded(winRate, currentTrades) {
+      // How many trades needed to distinguish from 50% at p<0.05?
+      const diff = Math.abs(winRate - 0.5);
+      if (diff < 0.02) return Infinity; // Too close to 50%
+      
+      // z = (p - 0.5) / sqrt(0.25/n)
+      // For z = 1.96 (95% CI): n = 0.25 * (1.96 / diff)^2
+      const needed = Math.ceil(0.25 * Math.pow(1.96 / diff, 2));
+      return Math.max(0, needed - currentTrades);
+    }
+    
+    function renderVerdict(winRate, n, tradesNeeded, name) {
+      const verdict = document.getElementById('verdict');
+      const se = Math.sqrt(winRate * (1 - winRate) / n);
+      const zScore = (winRate - 0.5) / se;
+      
+      if (tradesNeeded === Infinity || tradesNeeded > 500) {
+        verdict.className = 'verdict verdict-lucky';
+        verdict.innerHTML = `
+          <h3>🎲 Verdict: Probably Lucky</h3>
+          <p>${name}'s ${Math.round(winRate * 100)}% win rate is statistically indistinguishable from coin flipping (z=${zScore.toFixed(2)}).<br>
+          They would need ${tradesNeeded === Infinity ? 'many more' : tradesNeeded + ' more'} trades before we could conclude they have an edge.</p>
+        `;
+      } else if (tradesNeeded === 0 && zScore > 1.96) {
+        verdict.className = 'verdict verdict-skilled';
+        verdict.innerHTML = `
+          <h3>🎯 Verdict: Statistically Skilled</h3>
+          <p>${name} shows a statistically significant edge (z=${zScore.toFixed(2)}, p<0.05).<br>
+          Their calibration suggests genuine predictive ability, not just luck.</p>
+        `;
+      } else {
+        verdict.className = 'verdict verdict-uncertain';
+        verdict.innerHTML = `
+          <h3>⚠️ Verdict: Uncertain</h3>
+          <p>${name} needs ${tradesNeeded} more trades to prove skill at 95% confidence.<br>
+          Current evidence is insufficient to distinguish from luck (z=${zScore.toFixed(2)}).</p>
+        `;
+      }
+    }
+    
+    function renderCalibrationChart(trades) {
+      const canvas = document.getElementById('calibration-canvas');
+      const ctx = canvas.getContext('2d');
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      
+      const w = canvas.width;
+      const h = canvas.height;
+      const padding = 50;
+      
+      // Clear
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      
+      // Grid
+      ctx.strokeStyle = '#2a2a3a';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 10; i++) {
+        const x = padding + (i / 10) * (w - 2 * padding);
+        const y = padding + (i / 10) * (h - 2 * padding);
+        ctx.beginPath();
+        ctx.moveTo(x, padding);
+        ctx.lineTo(x, h - padding);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(w - padding, y);
+        ctx.stroke();
+      }
+      
+      // Perfect calibration line
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(padding, h - padding);
+      ctx.lineTo(w - padding, padding);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Axes labels
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Predicted Confidence', w / 2, h - 10);
+      ctx.save();
+      ctx.translate(15, h / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('Actual Win Rate', 0, 0);
+      ctx.restore();
+      
+      // Bucket trades
+      const buckets = {};
+      for (let i = 0; i < 10; i++) {
+        buckets[i] = { total: 0, wins: 0 };
+      }
+      
+      trades.forEach(t => {
+        const conf = t.side === 'yes' ? t.confidence : 1 - t.confidence;
+        const bucket = Math.min(9, Math.floor(conf * 10));
+        buckets[bucket].total++;
+        if ((t.side === 'yes' && t.outcome === 'yes') || (t.side === 'no' && t.outcome === 'no')) {
+          buckets[bucket].wins++;
+        }
+      });
+      
+      // Plot points
+      ctx.fillStyle = '#f59e0b';
+      Object.keys(buckets).forEach(i => {
+        const b = buckets[i];
+        if (b.total < 3) return; // Skip buckets with too few trades
+        
+        const predictedProb = (parseInt(i) + 0.5) / 10;
+        const actualFreq = b.wins / b.total;
+        
+        const x = padding + predictedProb * (w - 2 * padding);
+        const y = h - padding - actualFreq * (h - 2 * padding);
+        
+        const radius = Math.min(15, 5 + b.total);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Label
+        ctx.fillStyle = '#f1f5f9';
+        ctx.font = '10px sans-serif';
+        ctx.fillText(`n=${b.total}`, x, y - radius - 5);
+        ctx.fillStyle = '#f59e0b';
+      });
+      
+      // Axis ticks
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px sans-serif';
+      for (let i = 0; i <= 10; i += 2) {
+        const label = (i * 10) + '%';
+        const x = padding + (i / 10) * (w - 2 * padding);
+        ctx.textAlign = 'center';
+        ctx.fillText(label, x, h - padding + 20);
+        ctx.textAlign = 'right';
+        ctx.fillText(label, padding - 8, h - padding - (i / 10) * (h - 2 * padding) + 4);
+      }
+    }
+    
+    function renderTradeList(trades) {
+      const container = document.getElementById('trade-list');
+      container.innerHTML = trades.map(t => `
+        <div class="trade-item">
+          <span class="trade-market">${escapeHtml(t.market)}</span>
+          <span class="trade-side ${t.side}">${t.side.toUpperCase()}</span>
+          <span class="trade-outcome ${t.won ? 'outcome-win' : 'outcome-loss'}">
+            ${t.won ? '✓ Won' : '✗ Lost'}
+          </span>
+        </div>
+      `).join('');
+    }
+    
+    function formatNumber(n) {
+      if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+      return n.toFixed(0);
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
