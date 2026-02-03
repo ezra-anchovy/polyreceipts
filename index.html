@@ -3,53 +3,332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PolyReceipts</title>
+    <title>PolyReceipts - Show THEIR Receipts</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
         }
         .container {
-            max-width: 375px;
-            margin: auto;
+            max-width: 900px;
+            margin: 0 auto;
             padding: 20px;
-            background: white;
+        }
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         h1 {
-            font-size: 24px;
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #f39c12, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        canvas {
-            max-width: 100%;
-            height: auto;
+        .tagline {
+            color: #888;
+            margin-top: 10px;
+            font-size: 1.1em;
         }
-        /* Style for whale comparison chart */
-        #whaleComparisonChart {
-            margin-top: 20px;
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin: 30px 0;
+            flex-wrap: wrap;
         }
-        /* Additional styling to enhance mobile responsiveness */
-        @media (max-width: 375px) {
-            .container {
-                padding: 10px;
-                font-size: 14px;
-            }
+        .search-box input {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #1a1a2e;
+            color: #fff;
+            font-size: 16px;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #f39c12;
+        }
+        .search-box button {
+            padding: 15px 30px;
+            background: linear-gradient(90deg, #f39c12, #e74c3c);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .search-box button:hover {
+            transform: scale(1.05);
+        }
+        .whale-select {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .whale-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .whale-btn:hover, .whale-btn.active {
+            background: rgba(243, 156, 18, 0.3);
+            border-color: #f39c12;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #f39c12;
+        }
+        .stat-value.positive { color: #2ecc71; }
+        .stat-value.negative { color: #e74c3c; }
+        .stat-value.neutral { color: #f39c12; }
+        .stat-label {
+            color: #888;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        .verdict {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid #e74c3c;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .verdict.skilled {
+            background: rgba(46, 204, 113, 0.2);
+            border-color: #2ecc71;
+        }
+        .verdict h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .section {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .section h2 {
+            margin-bottom: 15px;
+            color: #f39c12;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        .receipts-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .receipts-table th, .receipts-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .receipts-table th {
+            color: #f39c12;
+            font-weight: 600;
+        }
+        .receipts-table tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .win { color: #2ecc71; }
+        .loss { color: #e74c3c; }
+        .pending { color: #f39c12; }
+        .hidden { display: none; }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+        }
+        .tab.active {
+            background: #f39c12;
+            color: #000;
+        }
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8em; }
+            .stat-value { font-size: 1.5em; }
+            .receipts-table { font-size: 0.85em; }
+            .receipts-table th, .receipts-table td { padding: 8px 4px; }
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid #f39c12;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to PolyReceipts</h1>
-        <p>Your command center for receipts.</p>
-        <canvas id="myChart"></canvas>
-        <canvas id="timelineChart"></canvas>
-        <canvas id="whaleComparisonChart"></canvas>
+        <header>
+            <h1>🧾 PolyReceipts</h1>
+            <p class="tagline">Show THEIR Receipts — Are famous traders skilled or just lucky?</p>
+        </header>
+
+        <div class="search-box">
+            <input type="text" id="walletInput" placeholder="Enter Polymarket wallet address (0x...)">
+            <button onclick="analyzeWallet()">Analyze</button>
+        </div>
+
+        <div class="whale-select">
+            <span style="color: #888; margin-right: 10px;">Quick lookup:</span>
+            <button class="whale-btn" onclick="selectWhale('swisstony')">🐋 swisstony</button>
+            <button class="whale-btn" onclick="selectWhale('theo')">🐳 Théo ($85M)</button>
+            <button class="whale-btn" onclick="selectWhale('domer')">🦈 Domer</button>
+            <button class="whale-btn" onclick="selectWhale('polytrader')">🐠 PolyTrader</button>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Analyzing whale's trade history...</p>
+        </div>
+
+        <div id="results" class="hidden">
+            <div id="verdict" class="verdict">
+                <h3 id="verdictTitle">⚠️ VERDICT: Insufficient Data</h3>
+                <p id="verdictText">Need more resolved trades to determine skill vs luck.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalPnL">$0</div>
+                    <div class="stat-label">Total P&L</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="winRate">0%</div>
+                    <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="brierScore">0.00</div>
+                    <div class="stat-label">Brier Score (lower = better)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="calibrationScore">0%</div>
+                    <div class="stat-label">Calibration Score</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTrades">0</div>
+                    <div class="stat-label">Total Positions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="tradesNeeded">∞</div>
+                    <div class="stat-label">Trades Needed for p&lt;0.05</div>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('calibration')">📊 Calibration</button>
+                <button class="tab" onclick="showTab('receipts')">🧾 Receipts</button>
+                <button class="tab" onclick="showTab('categories')">📈 By Category</button>
+                <button class="tab" onclick="showTab('timeline')">📅 Timeline</button>
+            </div>
+
+            <div id="calibration-tab" class="section">
+                <h2>Calibration Curve</h2>
+                <p style="color: #888; margin-bottom: 15px;">Does this trader's confidence match reality? Perfect calibration = diagonal line.</p>
+                <div class="chart-container">
+                    <canvas id="calibrationChart"></canvas>
+                </div>
+            </div>
+
+            <div id="receipts-tab" class="section hidden">
+                <h2>🧾 The Receipts</h2>
+                <p style="color: #888; margin-bottom: 15px;">Every bet, every outcome. No hiding.</p>
+                <table class="receipts-table">
+                    <thead>
+                        <tr>
+                            <th>Market</th>
+                            <th>Position</th>
+                            <th>Size</th>
+                            <th>Entry</th>
+                            <th>Result</th>
+                            <th>P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody id="receiptsBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="categories-tab" class="section hidden">
+                <h2>Performance by Category</h2>
+                <p style="color: #888; margin-bottom: 15px;">Are they actually good at politics, or just sports?</p>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <div id="timeline-tab" class="section hidden">
+                <h2>Cumulative P&L Over Time</h2>
+                <p style="color: #888; margin-bottom: 15px;">One lucky trade or consistent edge?</p>
+                <div class="chart-container">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <footer style="text-align: center; padding: 40px; color: #666;">
+            <p>Built by <a href="https://github.com/ezra-anchovy/polyreceipts" style="color: #f39c12;">@EzraAnchovy</a></p>
+            <p style="font-size: 0.8em; margin-top: 10px;">Whale accountability tool. Show their receipts.</p>
+        </footer>
     </div>
-    <script src="chart.js"></script>
-    <script src="timeline.js"></script>
-    <script src="whaleComparison.js"></script>
-    <script src="export.js"></script>
-    <script src="kellyCriterion.js"></script>
+
+    <script src="whales.js"></script>
+    <script src="analysis.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
