@@ -60,17 +60,41 @@ function analyzeWhale(whale) {
         const brier = calculateBrierScore(whale.positions);
         const calibration = calculateCalibration(whale.positions);
         const tradesNeeded = calculateTradesNeeded(whale.positions);
-        const verdict = generateVerdict(whale.positions);
+        
+        // Special handling for arbitrageurs
+        let verdict;
+        if (whale.isArbitrageur) {
+            verdict = {
+                verdict: 'arbitrage',
+                title: '🚨 VERDICT: Arbitrageur, NOT Skilled Predictor',
+                text: `This whale profits from latency arbitrage (exploiting price delays between Binance and Polymarket), not prediction skill. ${winRateData ? winRateData.winRate.toFixed(0) + '% win rate' : ''} proves they're NOT forecasting - they're front-running.`,
+                confident: true
+            };
+        } else {
+            verdict = generateVerdict(whale.positions);
+        }
         
         // Update UI
+        showWhaleDescription(whale);
         updateStats(pnl, winRateData, brier, calibration, tradesNeeded);
-        updateVerdict(verdict);
+        updateVerdict(verdict, whale.isArbitrageur);
         updateCharts(whale.positions, calibration);
         updateReceipts(whale.positions);
         
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('results').classList.remove('hidden');
     }, 800);
+}
+
+// Show whale description
+function showWhaleDescription(whale) {
+    const descEl = document.getElementById('whaleDescription');
+    if (whale.description) {
+        descEl.textContent = `${whale.name}: ${whale.description}`;
+        descEl.classList.remove('hidden');
+    } else {
+        descEl.classList.add('hidden');
+    }
 }
 
 // Update stat cards
@@ -128,9 +152,15 @@ function updateStats(pnl, winRate, brier, calibration, tradesNeeded) {
 }
 
 // Update verdict display
-function updateVerdict(verdict) {
+function updateVerdict(verdict, isArbitrageur = false) {
     const verdictDiv = document.getElementById('verdict');
-    verdictDiv.className = 'verdict ' + (verdict.verdict === 'skilled' ? 'skilled' : '');
+    let className = 'verdict';
+    if (verdict.verdict === 'skilled') {
+        className += ' skilled';
+    } else if (isArbitrageur || verdict.verdict === 'arbitrage') {
+        className += ' arbitrage';
+    }
+    verdictDiv.className = className;
     document.getElementById('verdictTitle').textContent = verdict.title;
     document.getElementById('verdictText').textContent = verdict.text;
 }

@@ -91,6 +91,10 @@
             background: rgba(243, 156, 18, 0.3);
             border-color: #f39c12;
         }
+        .whale-btn.arbitrage {
+            border-color: #e74c3c;
+            background: rgba(231, 76, 60, 0.2);
+        }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -127,6 +131,10 @@
         .verdict.skilled {
             background: rgba(46, 204, 113, 0.2);
             border-color: #2ecc71;
+        }
+        .verdict.arbitrage {
+            background: rgba(155, 89, 182, 0.2);
+            border-color: #9b59b6;
         }
         .verdict h3 {
             font-size: 1.5em;
@@ -210,6 +218,14 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .whale-description {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #aaa;
+        }
     </style>
 </head>
 <body>
@@ -229,7 +245,10 @@
             <button class="whale-btn" onclick="selectWhale('swisstony')">🐋 swisstony</button>
             <button class="whale-btn" onclick="selectWhale('theo')">🐳 Théo ($85M)</button>
             <button class="whale-btn" onclick="selectWhale('domer')">🦈 Domer</button>
-            <button class="whale-btn" onclick="selectWhale('polytrader')">🐠 PolyTrader</button>
+            <button class="whale-btn arbitrage" onclick="selectWhale('cryingLittleBaby')">🚨 CRYINGLITTLEBABY</button>
+            <button class="whale-btn" onclick="selectWhale('leJoe')">🌍 LeJoe</button>
+            <button class="whale-btn" onclick="selectWhale('jacobjhu')">📈 jacobjhu</button>
+            <button class="whale-btn" onclick="selectWhale('arcticMigration')">🧊 Arctic-Migration</button>
         </div>
 
         <div id="loading" class="loading hidden">
@@ -238,6 +257,8 @@
         </div>
 
         <div id="results" class="hidden">
+            <div id="whaleDescription" class="whale-description hidden"></div>
+            
             <div id="verdict" class="verdict">
                 <h3 id="verdictTitle">⚠️ VERDICT: Insufficient Data</h3>
                 <p id="verdictText">Need more resolved trades to determine skill vs luck.</p>
@@ -323,7 +344,7 @@
 
         <footer style="text-align: center; padding: 40px; color: #666;">
             <p>Built by <a href="https://github.com/ezra-anchovy/polyreceipts" style="color: #f39c12;">@EzraAnchovy</a></p>
-            <p style="font-size: 0.8em; margin-top: 10px;">Whale accountability tool. Show their receipts.</p>
+            <p style="font-size: 0.8em; margin-top: 10px;">Whale accountability tool. Show their receipts. 🧾</p>
         </footer>
     </div>
 
