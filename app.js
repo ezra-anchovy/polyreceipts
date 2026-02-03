@@ -10,13 +10,10 @@ function selectWhale(whaleId) {
         alert('Whale not found!');
         return;
     }
-    
     document.getElementById('walletInput').value = whale.wallet;
-    
     // Update button states
     document.querySelectorAll('.whale-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-    
     analyzeWhale(whale);
 }
 
@@ -27,7 +24,6 @@ function analyzeWallet() {
         alert('Please enter a wallet address');
         return;
     }
-    
     // Check if it's a known whale
     for (const [id, whale] of Object.entries(KNOWN_WHALES)) {
         if (whale.wallet.toLowerCase() === wallet.toLowerCase()) {
@@ -35,11 +31,9 @@ function analyzeWallet() {
             return;
         }
     }
-    
     // Unknown wallet - show loading then mock data
     document.getElementById('loading').classList.remove('hidden');
     document.getElementById('results').classList.add('hidden');
-    
     setTimeout(() => {
         document.getElementById('loading').classList.add('hidden');
         alert('Wallet not in our database yet. Try one of the known whales!');
@@ -50,17 +44,14 @@ function analyzeWallet() {
 function analyzeWhale(whale) {
     document.getElementById('loading').classList.remove('hidden');
     document.getElementById('results').classList.add('hidden');
-    
     setTimeout(() => {
         currentWhale = whale;
-        
         // Calculate all stats
         const pnl = calculatePnL(whale.positions);
         const winRateData = calculateWinRate(whale.positions);
         const brier = calculateBrierScore(whale.positions);
         const calibration = calculateCalibration(whale.positions);
         const tradesNeeded = calculateTradesNeeded(whale.positions);
-        
         // Special handling for arbitrageurs
         let verdict;
         if (whale.isArbitrageur) {
@@ -73,14 +64,12 @@ function analyzeWhale(whale) {
         } else {
             verdict = generateVerdict(whale.positions);
         }
-        
         // Update UI
         showWhaleDescription(whale);
         updateStats(pnl, winRateData, brier, calibration, tradesNeeded);
         updateVerdict(verdict, whale.isArbitrageur);
         updateCharts(whale.positions, calibration);
         updateReceipts(whale.positions);
-        
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('results').classList.remove('hidden');
     }, 800);
@@ -103,15 +92,15 @@ function updateStats(pnl, winRate, brier, calibration, tradesNeeded) {
     const pnlEl = document.getElementById('totalPnL');
     pnlEl.textContent = (pnl.realized >= 0 ? '+$' : '-$') + formatMoney(Math.abs(pnl.realized));
     pnlEl.className = 'stat-value ' + (pnl.realized >= 0 ? 'positive' : 'negative');
-    
+
     // ROI
     const roiEl = document.getElementById('roi');
     roiEl.textContent = (pnl.roi >= 0 ? '+' : '') + pnl.roi.toFixed(1) + '%';
     roiEl.className = 'stat-value ' + (pnl.roi >= 0 ? 'positive' : 'negative');
-    
+
     // Total Wagered
     document.getElementById('totalWagered').textContent = '$' + formatMoney(pnl.totalWagered);
-    
+
     // Win Rate
     const wrEl = document.getElementById('winRate');
     if (winRate) {
@@ -121,7 +110,7 @@ function updateStats(pnl, winRate, brier, calibration, tradesNeeded) {
         wrEl.textContent = 'N/A';
         wrEl.className = 'stat-value neutral';
     }
-    
+
     // Brier Score
     const brierEl = document.getElementById('brierScore');
     if (brier !== null) {
@@ -131,7 +120,7 @@ function updateStats(pnl, winRate, brier, calibration, tradesNeeded) {
         brierEl.textContent = 'N/A';
         brierEl.className = 'stat-value neutral';
     }
-    
+
     // Calibration
     const calEl = document.getElementById('calibrationScore');
     if (calibration) {
@@ -141,10 +130,10 @@ function updateStats(pnl, winRate, brier, calibration, tradesNeeded) {
         calEl.textContent = 'N/A';
         calEl.className = 'stat-value neutral';
     }
-    
+
     // Total Trades
     document.getElementById('totalTrades').textContent = Object.keys(currentWhale.positions).length;
-    
+
     // Trades Needed
     const tnEl = document.getElementById('tradesNeeded');
     if (tradesNeeded === Infinity || tradesNeeded > 9999) {
@@ -178,7 +167,6 @@ function updateCharts(positions, calibration) {
     // Destroy existing charts
     Object.values(charts).forEach(chart => chart.destroy());
     charts = {};
-    
     // Calibration Chart
     if (calibration) {
         const ctx = document.getElementById('calibrationChart').getContext('2d');
@@ -229,7 +217,6 @@ function updateCharts(positions, calibration) {
             }
         });
     }
-    
     // Category Chart
     const categories = getPerformanceByCategory(positions);
     const catLabels = Object.keys(categories);
@@ -237,7 +224,6 @@ function updateCharts(positions, calibration) {
         const data = categories[cat];
         return data.wins / (data.wins + data.losses) * 100;
     });
-    
     if (catLabels.length > 0) {
         const catCtx = document.getElementById('categoryChart').getContext('2d');
         charts.category = new Chart(catCtx, {
@@ -277,7 +263,6 @@ function updateCharts(positions, calibration) {
             }
         });
     }
-    
     // Timeline Chart (simulated cumulative P&L)
     const resolved = Object.values(positions).filter(p => p.resolved);
     let cumulative = 0;
@@ -289,7 +274,6 @@ function updateCharts(positions, calibration) {
         }
         return cumulative;
     });
-    
     if (timelineData.length > 0) {
         const tlCtx = document.getElementById('timelineChart').getContext('2d');
         charts.timeline = new Chart(tlCtx, {
@@ -331,7 +315,6 @@ function updateCharts(positions, calibration) {
 function updateReceipts(positions) {
     const tbody = document.getElementById('receiptsBody');
     tbody.innerHTML = '';
-    
     // Sort by size (largest first), then by resolved status
     const posArray = Object.entries(positions).sort((a, b) => {
         // Resolved positions first
@@ -339,19 +322,15 @@ function updateReceipts(positions) {
         // Then by size
         return b[1].size - a[1].size;
     });
-    
     let totalWins = 0, totalLosses = 0, totalPending = 0;
     let winPnL = 0, lossPnL = 0;
-    
     for (const [key, pos] of posArray) {
         const tr = document.createElement('tr');
-        
         // Calculate P&L for this position
         let pnl = 0;
         let resultClass = 'pending';
         let resultText = '⏳';
         const cost = pos.size * pos.avgPrice;
-        
         if (pos.resolved) {
             if (pos.won) {
                 pnl = pos.size - cost; // Won: get full size back minus cost
@@ -371,7 +350,6 @@ function updateReceipts(positions) {
             pnl = pos.size * pos.curPrice - cost;
             totalPending++;
         }
-        
         // Add category badge
         const category = categorizePosition(pos.title);
         const catEmoji = {
@@ -381,7 +359,6 @@ function updateReceipts(positions) {
             'Economics': '📊',
             'Other': '📌'
         }[category] || '📌';
-        
         tr.innerHTML = `
             <td title="${pos.title}">${catEmoji} ${pos.title.substring(0, 35)}${pos.title.length > 35 ? '...' : ''}</td>
             <td><strong>${pos.outcome}</strong></td>
@@ -392,7 +369,6 @@ function updateReceipts(positions) {
         `;
         tbody.appendChild(tr);
     }
-    
     // Add summary row
     const summaryRow = document.createElement('tr');
     summaryRow.style.borderTop = '2px solid #f39c12';
@@ -412,7 +388,6 @@ function showTab(tabName) {
     // Hide all tabs
     document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-    
     // Show selected tab
     document.getElementById(tabName + '-tab').classList.remove('hidden');
     event.target.classList.add('active');

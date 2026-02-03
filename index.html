@@ -70,6 +70,35 @@
         .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #f39c12; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .whale-description { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin: 15px 0; font-style: italic; color: #aaa; }
+        
+        /* Tooltip styles */
+        .stat-card { position: relative; cursor: help; }
+        .tooltip { 
+            visibility: hidden; opacity: 0; position: absolute; bottom: 100%; left: 50%; 
+            transform: translateX(-50%); background: #1a1a2e; border: 1px solid #f39c12;
+            padding: 12px; border-radius: 8px; width: 250px; z-index: 100;
+            font-size: 0.85em; color: #fff; text-align: left; line-height: 1.4;
+            transition: opacity 0.2s; pointer-events: none;
+        }
+        .tooltip::after {
+            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -8px;
+            border: 8px solid transparent; border-top-color: #f39c12;
+        }
+        .stat-card:hover .tooltip { visibility: visible; opacity: 1; }
+        .tooltip strong { color: #f39c12; }
+        .tooltip .good { color: #2ecc71; }
+        .tooltip .bad { color: #e74c3c; }
+        
+        .help-section {
+            background: rgba(255,255,255,0.03); border-radius: 12px; padding: 20px;
+            margin: 20px 0; border: 1px dashed rgba(243, 156, 18, 0.3);
+        }
+        .help-section h3 { color: #f39c12; margin-bottom: 15px; }
+        .help-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .help-item { padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; }
+        .help-item h4 { color: #f39c12; font-size: 0.9em; margin-bottom: 5px; }
+        .help-item p { color: #aaa; font-size: 0.85em; line-height: 1.4; }
+        
         @media (max-width: 600px) {
             h1 { font-size: 1.8em; }
             .stat-value { font-size: 1.3em; }
@@ -108,62 +137,90 @@
 
         <div id="results" class="hidden">
             <div id="whaleDescription" class="whale-description hidden"></div>
-            
             <div id="verdict" class="verdict">
                 <h3 id="verdictTitle">⚠️ VERDICT: Insufficient Data</h3>
                 <p id="verdictText">Need more resolved trades to determine skill vs luck.</p>
             </div>
-
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value" id="totalPnL">$0</div>
                     <div class="stat-label">Realized P&L</div>
+                    <div class="tooltip"><strong>Profit & Loss</strong><br>Total money made or lost from resolved bets. <span class="good">Green = profitable</span>, <span class="bad">Red = losing money</span>.</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="roi">0%</div>
                     <div class="stat-label">ROI</div>
+                    <div class="tooltip"><strong>Return on Investment</strong><br>Profit as % of amount wagered. <span class="good">10%+ is excellent</span>. <span class="bad">Negative = losing money</span>.</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="winRate">0%</div>
                     <div class="stat-label">Win Rate</div>
+                    <div class="tooltip"><strong>Win Rate</strong><br>% of bets that won. <span class="good">60%+ suggests skill</span>. Note: 50% ≠ random due to odds variations.</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="brierScore">0.00</div>
                     <div class="stat-label">Brier Score</div>
+                    <div class="tooltip"><strong>Brier Score</strong><br>Measures prediction accuracy. <span class="good">0 = perfect</span>. 0.25 = random guessing. <span class="bad">Higher = worse</span>. Formula: mean((predicted - actual)²)</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="calibrationScore">0%</div>
                     <div class="stat-label">Calibration</div>
+                    <div class="tooltip"><strong>Calibration Score</strong><br>Does confidence match reality? If you bet at 70% odds and win 70% of those, you're calibrated. <span class="good">100% = perfect calibration</span>.</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="totalTrades">0</div>
                     <div class="stat-label">Positions</div>
+                    <div class="tooltip"><strong>Total Positions</strong><br>Number of distinct bets/trades. More positions = more data to assess skill vs luck.</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="totalWagered">$0</div>
                     <div class="stat-label">Total Wagered</div>
+                    <div class="tooltip"><strong>Total Amount Wagered</strong><br>Sum of all bet sizes. Larger traders have more at stake but may also size based on confidence.</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="tradesNeeded">∞</div>
                     <div class="stat-label">Trades to p&lt;0.05</div>
+                    <div class="tooltip"><strong>Statistical Significance</strong><br>Trades needed to confidently say this isn't luck (p&lt;0.05). <span class="good">Lower = stronger evidence of skill</span>.</div>
                 </div>
             </div>
-
+            
+            <!-- How to Read This Section -->
+            <details class="help-section">
+                <summary style="cursor: pointer; color: #f39c12; font-weight: bold;">📖 How to Read These Metrics (click to expand)</summary>
+                <div class="help-grid" style="margin-top: 15px;">
+                    <div class="help-item">
+                        <h4>🎯 Brier Score</h4>
+                        <p>Measures prediction accuracy. <strong>0 = perfect</strong>, 0.25 = random guessing, 1 = always wrong. Lower is better. A skilled trader should score below 0.2.</p>
+                    </div>
+                    <div class="help-item">
+                        <h4>📊 Calibration Score</h4>
+                        <p>Do they know what they don't know? If someone bets at 70% implied odds, they should win ~70% of those. <strong>100% = perfectly calibrated</strong>. Overconfident traders score low.</p>
+                    </div>
+                    <div class="help-item">
+                        <h4>💰 Win Rate vs ROI</h4>
+                        <p>Win rate alone is misleading — a 90% win rate on -900 odds is expected. <strong>ROI (return on investment)</strong> accounts for odds and is the true measure of profitability.</p>
+                    </div>
+                    <div class="help-item">
+                        <h4>🎲 Skill vs Luck (p-value)</h4>
+                        <p>"Trades to p<0.05" shows how many more bets needed to statistically prove skill. <strong>Fewer = stronger evidence</strong>. Many "whales" need 100+ more trades to prove they're not just lucky.</p>
+                    </div>
+                </div>
+            </details>
+            
             <div class="tabs">
                 <button class="tab active" onclick="showTab('calibration')">📊 Calibration</button>
                 <button class="tab" onclick="showTab('receipts')">🧾 Receipts</button>
                 <button class="tab" onclick="showTab('categories')">📈 Categories</button>
                 <button class="tab" onclick="showTab('timeline')">📅 Timeline</button>
             </div>
-
             <div id="calibration-tab" class="section">
                 <h2>Calibration Curve</h2>
                 <p style="color: #888; margin-bottom: 15px;">Does confidence match outcomes? Perfect = diagonal line.</p>
                 <div class="chart-container">
                     <canvas id="calibrationChart"></canvas>
                 </div>
+                <div class="tooltip hidden" id="calibrationTooltip">Calibration Score: <span id='calibrationScoreValue'></span></div>
             </div>
-
             <div id="receipts-tab" class="section hidden">
                 <h2>🧾 The Receipts</h2>
                 <p style="color: #888; margin-bottom: 15px;">Every bet, every outcome. No hiding.</p>
@@ -174,30 +231,28 @@
                     <tbody id="receiptsBody"></tbody>
                 </table>
             </div>
-
             <div id="categories-tab" class="section hidden">
                 <h2>Performance by Category</h2>
                 <p style="color: #888; margin-bottom: 15px;">Where does this whale actually have edge (if any)?</p>
                 <div class="chart-container">
                     <canvas id="categoryChart"></canvas>
                 </div>
+                <div class="tooltip hidden" id="categoryTooltip">Win Rate by Category: <span id='winRateValue'></span></div>
             </div>
-
             <div id="timeline-tab" class="section hidden">
                 <h2>Cumulative P&L Over Time</h2>
                 <p style="color: #888; margin-bottom: 15px;">One lucky trade or consistent edge?</p>
                 <div class="chart-container">
                     <canvas id="timelineChart"></canvas>
                 </div>
+                <div class="tooltip hidden" id="timelineTooltip">Cumulative P&L: <span id='pnlValue'></span></div>
             </div>
         </div>
-
         <footer style="text-align: center; padding: 40px; color: #666;">
             <p>Built by <a href="https://github.com/ezra-anchovy/polyreceipts" style="color: #f39c12;">@EzraAnchovy</a></p>
             <p style="font-size: 0.8em; margin-top: 10px;">Whale accountability. Show their receipts. 🧾</p>
         </footer>
     </div>
-
     <script src="whales.js"></script>
     <script src="analysis.js"></script>
     <script src="app.js"></script>

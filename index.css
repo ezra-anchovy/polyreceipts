@@ -1,0 +1,17 @@
+.tooltip {
+    position: absolute;
+    background-color: rgba(52, 52, 52, 0.9);
+    color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    z-index: 10;
+    transition: opacity 0.3s;
+}
+.tooltip.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.tooltip.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
