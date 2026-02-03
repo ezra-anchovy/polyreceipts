@@ -82,16 +82,25 @@
         }
         .search-box button {
             padding: 15px 30px;
-            background: #f39c12;
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
             border: none;
             border-radius: 8px;
             color: #000;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.3s;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
+            animation: cta-pulse 2s infinite;
         }
         .search-box button:hover {
-            background: #e67e22;
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.6);
+        }
+        @keyframes cta-pulse {
+            0%, 100% { box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4); }
+            50% { box-shadow: 0 4px 25px rgba(243, 156, 18, 0.7); }
         }
         
         /* Loading */
@@ -464,38 +473,304 @@
             display: none !important;
         }
         
+        /* Quick Share Banner - Above Fold CTA */
+        .quick-share-banner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            background: linear-gradient(135deg, rgba(29, 161, 242, 0.15) 0%, rgba(29, 161, 242, 0.05) 100%);
+            border: 1px solid rgba(29, 161, 242, 0.3);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+        }
+        .quick-share-banner .qs-text {
+            color: #ccc;
+            font-size: 14px;
+        }
+        .quick-share-banner .share-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+        
+        /* Teaser Verdict */
+        .teaser-verdict {
+            background: linear-gradient(135deg, #2a0a0a 0%, #1a0505 100%);
+            border: 2px solid #e74c3c;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+            justify-content: center;
+        }
+        .teaser-verdict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(231, 76, 60, 0.3);
+            border-color: #ff6b6b;
+        }
+        .teaser-alert {
+            background: #e74c3c;
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .teaser-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+        }
+        .teaser-stats {
+            color: #aaa;
+            font-size: 14px;
+        }
+        .teaser-cta {
+            color: #f39c12;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        /* Whale Button Stats */
+        .whale-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .whale-stats {
+            font-size: 11px;
+            color: #888;
+            font-weight: normal;
+        }
+        .whale-btn.exposed {
+            border-color: #e74c3c;
+            background: #1a0a0a;
+        }
+        .whale-btn.exposed:hover {
+            border-color: #ff6b6b;
+            background: #2a1515;
+        }
+        .whale-btn.exposed .whale-stats {
+            color: #e74c3c;
+        }
+        
+        /* Share Button - PROMINENT CTA */
+        .share-section {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .share-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            border-radius: 12px;
+            border: none;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .share-btn.twitter {
+            background: linear-gradient(135deg, #1DA1F2 0%, #0d8ddb 100%);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(29, 161, 242, 0.4);
+            animation: share-pulse 2.5s infinite;
+        }
+        .share-btn.twitter:hover {
+            background: linear-gradient(135deg, #0d8ddb 0%, #0a7cc4 100%);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(29, 161, 242, 0.6);
+        }
+        @keyframes share-pulse {
+            0%, 100% { box-shadow: 0 4px 20px rgba(29, 161, 242, 0.4); }
+            50% { box-shadow: 0 4px 30px rgba(29, 161, 242, 0.7); }
+        }
+        .share-btn.copy {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+        }
+        .share-btn.copy:hover {
+            background: #444;
+            transform: translateY(-2px);
+        }
+        
         @media (max-width: 900px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .calibration-grid { grid-template-columns: 1fr; }
             .chart-grid { grid-template-columns: 1fr; }
+            .teaser-verdict { flex-direction: column; text-align: center; }
         }
         @media (max-width: 600px) {
             body { padding: 10px; }
-            .search-box input { padding: 10px; font-size: 14px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            h1 { font-size: 1.8rem; }
-            #verdictTitle { font-size: 1.3rem; }
+            h1 { font-size: 1.6rem; }
+            .subtitle { font-size: 14px; padding: 0 5px; }
+            
+            /* Search box mobile fix */
+            .search-box { 
+                flex-direction: column; 
+                gap: 10px;
+                padding: 0 5px;
+            }
+            .search-box input { 
+                padding: 14px; 
+                font-size: 16px; 
+                width: 100%;
+            }
+            .search-box button {
+                width: 100%;
+                padding: 16px;
+                font-size: 16px;
+            }
+            
+            /* Stats mobile fix */
+            .stats-grid { 
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 10px;
+            }
+            .stat-card { padding: 15px 10px; }
+            .stat-value { font-size: 20px; }
+            .stat-label { font-size: 10px; }
+            
+            /* Whale buttons mobile */
+            .whale-selector {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .whale-btn { 
+                width: 100%; 
+                padding: 10px 15px;
+                font-size: 13px;
+            }
+            .whale-stats { font-size: 10px; }
+            
+            /* Teaser mobile */
+            .teaser-verdict { padding: 15px; }
+            .teaser-name { font-size: 1rem; }
+            .teaser-stats { font-size: 12px; }
+            .teaser-cta { font-size: 12px; }
+            .teaser-alert { font-size: 10px; padding: 4px 8px; }
+            
+            /* Charts mobile */
+            .chart-container { height: 200px; }
+            
+            /* Table mobile */
+            .receipts-table { 
+                display: block; 
+                overflow-x: auto;
+                font-size: 12px;
+            }
+            .receipts-table th,
+            .receipts-table td {
+                padding: 8px 6px;
+                white-space: nowrap;
+            }
+            
+            /* Verdict mobile */
+            #verdictTitle { font-size: 1.2rem; }
+            #verdictText { font-size: 14px; }
+            .verdict { padding: 20px 15px; }
+            
+            /* Share buttons mobile - STACK */
+            .share-section { 
+                flex-direction: column; 
+                gap: 10px;
+            }
+            .share-btn { 
+                width: 100%; 
+                justify-content: center;
+                padding: 14px 20px;
+                font-size: 15px;
+            }
+            
+            /* Calibration section mobile */
+            .calibration-section { padding: 15px; }
+            .calibration-card { padding: 15px; }
+            .streak-item { width: 32px; height: 32px; font-size: 14px; }
+            .extremes-list .title { max-width: 140px; font-size: 11px; }
+            .extremes-list .amount { font-size: 12px; }
+            
+            /* Tabs mobile */
+            .tabs { gap: 5px; overflow-x: auto; }
+            .tab { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
+            
+            /* Quick share banner mobile */
+            .quick-share-banner {
+                flex-direction: column;
+                gap: 10px;
+                padding: 12px 15px;
+                text-align: center;
+            }
+            .quick-share-banner .share-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        /* Extra small devices (375px and below) */
+        @media (max-width: 375px) {
+            body { padding: 8px; }
+            h1 { font-size: 1.4rem; }
+            .subtitle { font-size: 13px; }
+            .stats-grid { gap: 8px; }
+            .stat-value { font-size: 18px; }
+            .whale-btn { padding: 8px 12px; }
+            .streak-item { width: 28px; height: 28px; font-size: 12px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🐋 PolyReceipts</h1>
-        <p class="subtitle">Hold whales accountable. Separate skill from luck.</p>
+        <p class="subtitle">That influencer with $2M in Polymarket? We ran the numbers. <span style="color: #e74c3c; font-weight: bold;">45% win rate. Pure luck.</span></p>
+        
+        <!-- Quick Share CTA -->
+        <div class="quick-share-banner">
+            <span class="qs-text">📢 Expose fake gurus to your followers</span>
+            <button class="share-btn twitter" onclick="shareToTwitter()" style="animation: share-pulse 2s infinite;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                Share on X
+            </button>
+        </div>
+        
+        <!-- Teaser Verdict -->
+        <div class="teaser-verdict" onclick="selectWhale('cryingLittleBaby')">
+            <span class="teaser-alert">🚨 EXPOSED</span>
+            <span class="teaser-name">CRYINGLITTLEBABY</span>
+            <span class="teaser-stats">$381K profit • <span style="color: #e74c3c;">45% win rate</span></span>
+            <span class="teaser-cta">Arbitrageur, NOT predictor. Click to see receipts →</span>
+        </div>
         
         <!-- Known Whales -->
         <div class="whale-selector">
-            <button class="whale-btn" onclick="selectWhale('swisstony')">🎾 swisstony</button>
-            <button class="whale-btn" onclick="selectWhale('theo')">🏛️ Théo</button>
-            <button class="whale-btn" onclick="selectWhale('domer')">🏈 Domer</button>
-            <button class="whale-btn" onclick="selectWhale('polytrader')">₿ PolyTrader</button>
-            <button class="whale-btn" onclick="selectWhale('cryingLittleBaby')">🚨 CryingLittleBaby</button>
+            <button class="whale-btn" onclick="selectWhale('swisstony')">🎾 swisstony — <span class="whale-stats">62% win, $45K profit</span></button>
+            <button class="whale-btn" onclick="selectWhale('theo')">🏛️ Théo<span class="whale-stats">70% • +$5.2M</span></button>
+            <button class="whale-btn" onclick="selectWhale('domer')">🏈 Domer<span class="whale-stats">50% • +$127K</span></button>
+            <button class="whale-btn" onclick="selectWhale('polytrader')">₿ PolyTrader<span class="whale-stats">60% • +$62K</span></button>
+            <button class="whale-btn exposed" onclick="selectWhale('cryingLittleBaby')">🚨 CryingLittleBaby<span class="whale-stats">45% • $381K*</span></button>
         </div>
         
         <!-- Search -->
         <div class="search-box">
             <input type="text" id="walletInput" placeholder="Enter wallet address (0x...)">
-            <button onclick="analyzeWallet()">Analyze</button>
+            <button onclick="analyzeWallet()">🔍 Analyze Wallet</button>
         </div>
         
         <!-- Loading -->
@@ -518,6 +793,17 @@
             <div id="verdict" class="verdict">
                 <div id="verdictTitle">Loading...</div>
                 <div id="verdictText"></div>
+                
+                <!-- Share Buttons -->
+                <div class="share-section">
+                    <button class="share-btn twitter" onclick="shareToTwitter()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        Share on X
+                    </button>
+                    <button class="share-btn copy" onclick="copyShareLink()">
+                        📋 Copy Link
+                    </button>
+                </div>
             </div>
             
             <!-- NEW: Calibration Score Section -->
