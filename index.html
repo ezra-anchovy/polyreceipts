@@ -3,20 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PolyReceipts Whale Calibration Analyzer</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>PolyReceipts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 375px;
+            margin: auto;
+            padding: 20px;
+            background: white;
+        }
+        h1 {
+            font-size: 24px;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+        /* Style for whale comparison chart */
+        #whaleComparisonChart {
+            margin-top: 20px;
+        }
+        /* Additional styling to enhance mobile responsiveness */
+        @media (max-width: 375px) {
+            .container {
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to PolyReceipts</h1>
-    <div id="dataDisplay"></div>
-    <script>
-      async function fetchPolymarketData() {
-        const response = await axios.post('https://data-api.polymarket.com/graphql', {
-          query: '{\n            positions {\n              id\n              createdAt\n              updatedAt\n              position\n              market {\n                id\n                title\n              }\n            }\n          }\n        }');
-        console.log(response.data);
-        document.getElementById('dataDisplay').innerText = JSON.stringify(response.data, null, 2);
-      }
-      fetchPolymarketData();
-    </script>
+    <div class="container">
+        <h1>Welcome to PolyReceipts</h1>
+        <p>Your command center for receipts.</p>
+        <canvas id="myChart"></canvas>
+        <canvas id="timelineChart"></canvas>
+        <canvas id="whaleComparisonChart"></canvas>
+    </div>
+    <script src="chart.js"></script>
+    <script src="timeline.js"></script>
+    <script src="whaleComparison.js"></script>
+    <script src="export.js"></script>
+    <script src="kellyCriterion.js"></script>
 </body>
 </html>
