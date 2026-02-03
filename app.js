@@ -99,10 +99,18 @@ function showWhaleDescription(whale) {
 
 // Update stat cards
 function updateStats(pnl, winRate, brier, calibration, tradesNeeded) {
-    // P&L
+    // P&L (realized)
     const pnlEl = document.getElementById('totalPnL');
-    pnlEl.textContent = (pnl.total >= 0 ? '+$' : '-$') + formatMoney(Math.abs(pnl.total));
-    pnlEl.className = 'stat-value ' + (pnl.total >= 0 ? 'positive' : 'negative');
+    pnlEl.textContent = (pnl.realized >= 0 ? '+$' : '-$') + formatMoney(Math.abs(pnl.realized));
+    pnlEl.className = 'stat-value ' + (pnl.realized >= 0 ? 'positive' : 'negative');
+    
+    // ROI
+    const roiEl = document.getElementById('roi');
+    roiEl.textContent = (pnl.roi >= 0 ? '+' : '') + pnl.roi.toFixed(1) + '%';
+    roiEl.className = 'stat-value ' + (pnl.roi >= 0 ? 'positive' : 'negative');
+    
+    // Total Wagered
+    document.getElementById('totalWagered').textContent = '$' + formatMoney(pnl.totalWagered);
     
     // Win Rate
     const wrEl = document.getElementById('winRate');

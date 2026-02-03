@@ -66,20 +66,39 @@ function calculateCalibration(positions) {
 }
 
 /**
- * Calculate total P&L
+ * Calculate total P&L with detailed breakdown
  */
 function calculatePnL(positions) {
     let totalPnL = 0;
     let resolvedPnL = 0;
     let unrealizedPnL = 0;
+    let totalWagered = 0;
+    let winPnL = 0;
+    let lossPnL = 0;
+    let biggestWin = { pnl: 0, title: '' };
+    let biggestLoss = { pnl: 0, title: '' };
     
     for (const pos of Object.values(positions)) {
         const cost = pos.size * pos.avgPrice;
+        totalWagered += cost;
         
         if (pos.resolved) {
             // Resolved: won = get size back, lost = get nothing
             const payout = pos.won ? pos.size : 0;
-            resolvedPnL += payout - cost;
+            const pnl = payout - cost;
+            resolvedPnL += pnl;
+            
+            if (pos.won) {
+                winPnL += pnl;
+                if (pnl > biggestWin.pnl) {
+                    biggestWin = { pnl, title: pos.title };
+                }
+            } else {
+                lossPnL += pnl;
+                if (pnl < biggestLoss.pnl) {
+                    biggestLoss = { pnl, title: pos.title };
+                }
+            }
         } else {
             // Unrealized: estimate based on current price
             const currentValue = pos.size * pos.curPrice;
@@ -89,11 +108,66 @@ function calculatePnL(positions) {
     
     totalPnL = resolvedPnL + unrealizedPnL;
     
+    // Calculate ROI
+    const roi = totalWagered > 0 ? (resolvedPnL / totalWagered) * 100 : 0;
+    
     return {
         total: totalPnL,
         realized: resolvedPnL,
-        unrealized: unrealizedPnL
+        unrealized: unrealizedPnL,
+        totalWagered,
+        winPnL,
+        lossPnL,
+        roi,
+        biggestWin,
+        biggestLoss
     };
+}
+
+/**
+ * Calculate detailed P&L breakdown by category
+ */
+function calculateCategoryPnL(positions) {
+    const categories = {};
+    
+    for (const pos of Object.values(positions)) {
+        const cat = categorizePosition(pos.title);
+        if (!categories[cat]) {
+            categories[cat] = {
+                name: cat,
+                totalPnL: 0,
+                wagered: 0,
+                wins: 0,
+                losses: 0,
+                pending: 0
+            };
+        }
+        
+        const cost = pos.size * pos.avgPrice;
+        categories[cat].wagered += cost;
+        
+        if (pos.resolved) {
+            const payout = pos.won ? pos.size : 0;
+            categories[cat].totalPnL += payout - cost;
+            if (pos.won) {
+                categories[cat].wins++;
+            } else {
+                categories[cat].losses++;
+            }
+        } else {
+            categories[cat].pending++;
+        }
+    }
+    
+    // Calculate ROI per category
+    for (const cat of Object.values(categories)) {
+        cat.roi = cat.wagered > 0 ? (cat.totalPnL / cat.wagered) * 100 : 0;
+        cat.winRate = (cat.wins + cat.losses) > 0 
+            ? (cat.wins / (cat.wins + cat.losses)) * 100 
+            : 0;
+    }
+    
+    return categories;
 }
 
 /**
