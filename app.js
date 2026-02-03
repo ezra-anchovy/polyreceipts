@@ -327,12 +327,21 @@ function updateCharts(positions, calibration) {
     }
 }
 
-// Update receipts table
+// Update receipts table with enhanced details
 function updateReceipts(positions) {
     const tbody = document.getElementById('receiptsBody');
     tbody.innerHTML = '';
     
-    const posArray = Object.entries(positions).sort((a, b) => b[1].size - a[1].size);
+    // Sort by size (largest first), then by resolved status
+    const posArray = Object.entries(positions).sort((a, b) => {
+        // Resolved positions first
+        if (a[1].resolved !== b[1].resolved) return a[1].resolved ? -1 : 1;
+        // Then by size
+        return b[1].size - a[1].size;
+    });
+    
+    let totalWins = 0, totalLosses = 0, totalPending = 0;
+    let winPnL = 0, lossPnL = 0;
     
     for (const [key, pos] of posArray) {
         const tr = document.createElement('tr');
@@ -340,32 +349,62 @@ function updateReceipts(positions) {
         // Calculate P&L for this position
         let pnl = 0;
         let resultClass = 'pending';
-        let resultText = '⏳ Pending';
+        let resultText = '⏳';
+        const cost = pos.size * pos.avgPrice;
         
         if (pos.resolved) {
             if (pos.won) {
-                pnl = pos.size * (1 - pos.avgPrice);
+                pnl = pos.size - cost; // Won: get full size back minus cost
                 resultClass = 'win';
-                resultText = '✅ Won';
+                resultText = '✅';
+                totalWins++;
+                winPnL += pnl;
             } else {
-                pnl = -pos.size * pos.avgPrice;
+                pnl = -cost; // Lost: lose entire cost
                 resultClass = 'loss';
-                resultText = '❌ Lost';
+                resultText = '❌';
+                totalLosses++;
+                lossPnL += pnl;
             }
         } else {
-            pnl = pos.size * (pos.curPrice - pos.avgPrice);
+            // Unrealized P&L based on current price
+            pnl = pos.size * pos.curPrice - cost;
+            totalPending++;
         }
         
+        // Add category badge
+        const category = categorizePosition(pos.title);
+        const catEmoji = {
+            'Politics': '🗳️',
+            'Sports': '⚽',
+            'Crypto': '₿',
+            'Economics': '📊',
+            'Other': '📌'
+        }[category] || '📌';
+        
         tr.innerHTML = `
-            <td>${pos.title.substring(0, 40)}${pos.title.length > 40 ? '...' : ''}</td>
-            <td>${pos.outcome}</td>
+            <td title="${pos.title}">${catEmoji} ${pos.title.substring(0, 35)}${pos.title.length > 35 ? '...' : ''}</td>
+            <td><strong>${pos.outcome}</strong></td>
             <td>$${formatMoney(pos.size)}</td>
-            <td>${(pos.avgPrice * 100).toFixed(0)}%</td>
+            <td>${(pos.avgPrice * 100).toFixed(0)}¢</td>
             <td class="${resultClass}">${resultText}</td>
             <td class="${pnl >= 0 ? 'win' : 'loss'}">${pnl >= 0 ? '+' : ''}$${formatMoney(Math.abs(pnl))}</td>
         `;
         tbody.appendChild(tr);
     }
+    
+    // Add summary row
+    const summaryRow = document.createElement('tr');
+    summaryRow.style.borderTop = '2px solid #f39c12';
+    summaryRow.style.fontWeight = 'bold';
+    const netPnL = winPnL + lossPnL;
+    summaryRow.innerHTML = `
+        <td colspan="2">TOTAL: ${totalWins}W / ${totalLosses}L / ${totalPending}P</td>
+        <td colspan="2"></td>
+        <td></td>
+        <td class="${netPnL >= 0 ? 'win' : 'loss'}">${netPnL >= 0 ? '+' : ''}$${formatMoney(Math.abs(netPnL))}</td>
+    `;
+    tbody.appendChild(summaryRow);
 }
 
 // Tab switching
