@@ -212,7 +212,105 @@ function calculateTradesNeeded(positions) {
 }
 
 /**
+ * Calculate confidence interval for skill assessment
+ * Uses Wilson score interval for binomial proportion
+ */
+function calculateSkillConfidence(positions) {
+    const resolved = Object.values(positions).filter(p => p.resolved);
+    if (resolved.length < 5) return null;
+    
+    const n = resolved.length;
+    const wins = resolved.filter(p => p.won).length;
+    const p = wins / n;
+    
+    // Wilson score interval (more accurate than normal approximation for small n)
+    const z = 1.96; // 95% confidence
+    const denominator = 1 + z*z/n;
+    const center = (p + z*z/(2*n)) / denominator;
+    const spread = z * Math.sqrt((p*(1-p) + z*z/(4*n)) / n) / denominator;
+    
+    const lowerBound = center - spread;
+    const upperBound = center + spread;
+    
+    // Check if 50% (random) is outside the confidence interval
+    const isSignificant = lowerBound > 0.5 || upperBound < 0.5;
+    const edgeDirection = p > 0.5 ? 'positive' : (p < 0.5 ? 'negative' : 'neutral');
+    
+    return {
+        winRate: p * 100,
+        lowerBound: lowerBound * 100,
+        upperBound: upperBound * 100,
+        isSignificant,
+        edgeDirection,
+        sampleSize: n,
+        // How many more trades needed for significance at current win rate
+        tradesForSignificance: calculateMinTradesForSignificance(p)
+    };
+}
+
+/**
+ * Calculate minimum trades needed to achieve statistical significance
+ * at the current observed win rate
+ */
+function calculateMinTradesForSignificance(observedWinRate) {
+    if (Math.abs(observedWinRate - 0.5) < 0.01) return 99999; // Too close to 50%
+    
+    // Binary search for minimum n where CI doesn't include 0.5
+    let low = 1, high = 10000;
+    const z = 1.96;
+    
+    while (low < high) {
+        const mid = Math.floor((low + high) / 2);
+        const n = mid;
+        const p = observedWinRate;
+        
+        const denominator = 1 + z*z/n;
+        const center = (p + z*z/(2*n)) / denominator;
+        const spread = z * Math.sqrt((p*(1-p) + z*z/(4*n)) / n) / denominator;
+        
+        const lowerBound = center - spread;
+        const upperBound = center + spread;
+        
+        // Check if 0.5 is outside the interval
+        if ((p > 0.5 && lowerBound > 0.5) || (p < 0.5 && upperBound < 0.5)) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+    
+    return low;
+}
+
+/**
+ * Calculate expected value per trade (edge)
+ */
+function calculateExpectedValue(positions) {
+    const resolved = Object.values(positions).filter(p => p.resolved);
+    if (resolved.length === 0) return null;
+    
+    let totalEV = 0;
+    for (const pos of resolved) {
+        // EV = (win probability * payout) - (loss probability * stake)
+        // If they bet at avgPrice, and won, payout = size * (1 - avgPrice)
+        // If they lost, they lost size * avgPrice
+        const implied = pos.avgPrice; // market's implied probability
+        const actual = pos.won ? 1 : 0;
+        const edge = actual - implied; // positive = they had edge
+        totalEV += edge * pos.size * pos.avgPrice; // weighted by stake
+    }
+    
+    const avgEdge = totalEV / resolved.reduce((sum, p) => sum + p.size * p.avgPrice, 0);
+    return {
+        totalEV,
+        avgEdgePercent: avgEdge * 100, // as percentage of stake
+        perTradeEV: totalEV / resolved.length
+    };
+}
+
+/**
  * Generate the verdict - is this whale skilled or lucky?
+ * Uses rigorous statistical analysis
  */
 function generateVerdict(positions) {
     const resolved = Object.values(positions).filter(p => p.resolved);
@@ -228,82 +326,106 @@ function generateVerdict(positions) {
     const brier = calculateBrierScore(positions);
     const winRateData = calculateWinRate(positions);
     const calibration = calculateCalibration(positions);
-    const tradesNeeded = calculateTradesNeeded(positions);
+    const confidence = calculateSkillConfidence(positions);
+    const ev = calculateExpectedValue(positions);
     const pnl = calculatePnL(positions);
-    
-    // Skilled criteria:
-    // 1. Win rate > 55%
-    // 2. Brier score < 0.20 (better than average)
-    // 3. Calibration score > 60%
-    // 4. Positive P&L
-    // 5. Statistically significant (or close)
     
     let skillPoints = 0;
     let reasons = [];
+    let keyInsight = '';
     
+    // Statistical significance is the gold standard
+    if (confidence && confidence.isSignificant) {
+        skillPoints += 4;
+        keyInsight = `Statistically significant ${confidence.edgeDirection} edge detected!`;
+        reasons.push(`95% CI: [${confidence.lowerBound.toFixed(1)}%, ${confidence.upperBound.toFixed(1)}%] (doesn't include 50%)`);
+    } else if (confidence) {
+        const needed = confidence.tradesForSignificance - resolved.length;
+        if (needed > 0 && needed < 100) {
+            reasons.push(`Need ${needed} more trades to confirm edge (95% CI includes 50%)`);
+        } else {
+            reasons.push(`Current evidence insufficient - variance too high`);
+        }
+    }
+    
+    // Win rate analysis
     if (winRateData.winRate > 60) {
         skillPoints += 2;
-        reasons.push(`High win rate (${winRateData.winRate.toFixed(1)}%)`);
+        reasons.push(`Strong win rate: ${winRateData.winRate.toFixed(1)}%`);
     } else if (winRateData.winRate > 55) {
         skillPoints += 1;
-        reasons.push(`Decent win rate (${winRateData.winRate.toFixed(1)}%)`);
+        reasons.push(`Above-average win rate: ${winRateData.winRate.toFixed(1)}%`);
+    } else if (winRateData.winRate < 45) {
+        skillPoints -= 1;
+        reasons.push(`Below-average win rate: ${winRateData.winRate.toFixed(1)}%`);
     } else {
-        reasons.push(`Mediocre win rate (${winRateData.winRate.toFixed(1)}%)`);
+        reasons.push(`Win rate near random: ${winRateData.winRate.toFixed(1)}%`);
     }
     
+    // Brier score (prediction quality)
     if (brier < 0.15) {
         skillPoints += 2;
-        reasons.push(`Excellent Brier score (${brier.toFixed(3)})`);
-    } else if (brier < 0.22) {
+        reasons.push(`Excellent Brier score: ${brier.toFixed(3)}`);
+    } else if (brier < 0.20) {
         skillPoints += 1;
-        reasons.push(`Good Brier score (${brier.toFixed(3)})`);
-    } else {
-        reasons.push(`Poor Brier score (${brier.toFixed(3)})`);
+        reasons.push(`Good Brier score: ${brier.toFixed(3)}`);
+    } else if (brier > 0.25) {
+        skillPoints -= 1;
+        reasons.push(`Poor Brier score: ${brier.toFixed(3)} (worse than random)`);
     }
     
+    // Calibration
     if (calibration && calibration.score > 70) {
+        skillPoints += 1;
+        reasons.push(`Well calibrated: ${calibration.score.toFixed(0)}%`);
+    }
+    
+    // Expected value per trade
+    if (ev && ev.avgEdgePercent > 5) {
         skillPoints += 2;
-        reasons.push(`Well calibrated (${calibration.score.toFixed(0)}%)`);
-    } else if (calibration && calibration.score > 50) {
-        skillPoints += 1;
+        reasons.push(`Positive edge: +${ev.avgEdgePercent.toFixed(1)}% per dollar wagered`);
+    } else if (ev && ev.avgEdgePercent < -5) {
+        skillPoints -= 1;
+        reasons.push(`Negative edge: ${ev.avgEdgePercent.toFixed(1)}% per dollar wagered`);
     }
     
-    if (pnl.realized > 0) {
+    // P&L as sanity check
+    if (pnl.realized > 0 && pnl.roi > 10) {
         skillPoints += 1;
-        reasons.push(`Profitable ($${formatMoney(pnl.realized)} realized)`);
+        reasons.push(`Profitable: +$${formatMoney(pnl.realized)} (${pnl.roi.toFixed(0)}% ROI)`);
+    } else if (pnl.roi < -20) {
+        skillPoints -= 1;
+        reasons.push(`Significant losses: ${pnl.roi.toFixed(0)}% ROI`);
     }
     
-    if (tradesNeeded < 50) {
-        skillPoints += 2;
-        reasons.push('Statistically significant edge');
-    } else if (tradesNeeded < 200) {
-        skillPoints += 1;
-        reasons.push(`Getting close to significance (need ${tradesNeeded} more trades)`);
-    } else {
-        reasons.push(`Far from significance (need ${tradesNeeded} more trades)`);
-    }
-    
-    // Generate verdict
-    if (skillPoints >= 7) {
+    // Generate verdict based on total skill points
+    if (skillPoints >= 6 && confidence && confidence.isSignificant) {
         return {
             verdict: 'skilled',
-            title: '✅ VERDICT: Likely Skilled',
-            text: reasons.join('. ') + '. This trader shows consistent edge.',
-            confident: tradesNeeded < 100
+            title: '✅ VERDICT: Likely Skilled Trader',
+            text: keyInsight + ' ' + reasons.join('. ') + '.',
+            confident: true
         };
     } else if (skillPoints >= 4) {
         return {
             verdict: 'maybe',
-            title: '🤷 VERDICT: Possibly Skilled, More Data Needed',
-            text: reasons.join('. ') + '. Cannot rule out luck yet.',
+            title: '🤷 VERDICT: Possibly Skilled, Not Proven',
+            text: reasons.join('. ') + '. More data needed to rule out luck.',
             confident: false
+        };
+    } else if (skillPoints <= 0) {
+        return {
+            verdict: 'lucky',
+            title: '🎲 VERDICT: No Evidence of Skill',
+            text: reasons.join('. ') + '. Performance consistent with random chance.',
+            confident: resolved.length > 30
         };
     } else {
         return {
-            verdict: 'lucky',
-            title: '🎲 VERDICT: Probably Just Lucky',
-            text: reasons.join('. ') + '. No evidence of systematic edge.',
-            confident: resolved.length > 20
+            verdict: 'inconclusive',
+            title: '❓ VERDICT: Inconclusive',
+            text: reasons.join('. ') + '. Mixed signals - could be skill or luck.',
+            confident: false
         };
     }
 }
