@@ -3,258 +3,1198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PolyReceipts - Show THEIR Receipts</title>
+    <title>PolyReceipts - Whale Calibration Analyzer</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="index.css">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #eee;
+            background: #0f0f0f;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
             min-height: 100vh;
         }
-        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
-        header { text-align: center; padding: 40px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
         h1 {
-            font-size: 2.5em;
-            background: linear-gradient(90deg, #f39c12, #e74c3c);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
         }
-        .tagline { color: #888; margin-top: 10px; font-size: 1.1em; }
-        .search-box { display: flex; gap: 10px; margin: 30px 0; flex-wrap: wrap; }
-        .search-box input {
-            flex: 1; min-width: 200px; padding: 15px; border: 2px solid #333;
-            border-radius: 8px; background: #1a1a2e; color: #fff; font-size: 16px;
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
         }
-        .search-box input:focus { outline: none; border-color: #f39c12; }
-        .search-box button {
-            padding: 15px 30px; background: linear-gradient(90deg, #f39c12, #e74c3c);
-            border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer;
+        
+        /* Whale Selection */
+        .whale-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
         }
-        .whale-select { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
         .whale-btn {
-            padding: 10px 20px; background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
-            color: #fff; cursor: pointer; transition: all 0.2s;
+            padding: 12px 20px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
         }
-        .whale-btn:hover, .whale-btn.active { background: rgba(243, 156, 18, 0.3); border-color: #f39c12; }
-        .whale-btn.arbitrage { border-color: #e74c3c; background: rgba(231, 76, 60, 0.2); }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin: 30px 0; }
-        .stat-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; text-align: center; }
-        .stat-value { font-size: 1.8em; font-weight: bold; color: #f39c12; }
+        .whale-btn:hover {
+            border-color: #f39c12;
+            background: #222;
+        }
+        .whale-btn.active {
+            border-color: #f39c12;
+            background: #2a2a0a;
+        }
+        
+        /* Search Box */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 15px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #f39c12;
+        }
+        .search-box button {
+            padding: 15px 30px;
+            background: #f39c12;
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-box button:hover {
+            background: #e67e22;
+        }
+        
+        /* Loading */
+        #loading {
+            text-align: center;
+            padding: 60px;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #333;
+            border-top-color: #f39c12;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Results */
+        #results {
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Data Timestamp */
+        .data-timestamp {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+        .data-timestamp span {
+            color: #888;
+        }
+        
+        /* Whale Description */
+        #whaleDescription {
+            text-align: center;
+            color: #aaa;
+            font-style: italic;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #1a1a1a;
+            border-radius: 8px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-label {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
         .stat-value.positive { color: #2ecc71; }
         .stat-value.negative { color: #e74c3c; }
         .stat-value.neutral { color: #f39c12; }
-        .stat-label { color: #888; margin-top: 5px; font-size: 0.85em; }
-        .verdict { background: rgba(231, 76, 60, 0.2); border: 2px solid #e74c3c; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; }
-        .verdict.skilled { background: rgba(46, 204, 113, 0.2); border-color: #2ecc71; }
-        .verdict.arbitrage { background: rgba(155, 89, 182, 0.2); border-color: #9b59b6; }
-        .verdict h3 { font-size: 1.4em; margin-bottom: 10px; }
-        .section { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 20px; margin: 20px 0; }
-        .section h2 { margin-bottom: 15px; color: #f39c12; }
-        .chart-container { position: relative; height: 300px; margin: 20px 0; }
-        .receipts-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        .receipts-table th, .receipts-table td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .receipts-table th { color: #f39c12; font-weight: 600; }
-        .receipts-table tr:hover { background: rgba(255,255,255,0.05); }
-        .win { color: #2ecc71; }
-        .loss { color: #e74c3c; }
-        .pending { color: #f39c12; }
-        .hidden { display: none; }
-        .tabs { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
-        .tab { padding: 10px 20px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: #fff; cursor: pointer; }
-        .tab.active { background: #f39c12; color: #000; }
-        .loading { text-align: center; padding: 40px; color: #888; }
-        .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #f39c12; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .whale-description { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin: 15px 0; font-style: italic; color: #aaa; }
         
-        /* Tooltip styles */
-        .stat-card { position: relative; cursor: help; }
-        .tooltip { 
-            visibility: hidden; opacity: 0; position: absolute; bottom: 100%; left: 50%; 
-            transform: translateX(-50%); background: #1a1a2e; border: 1px solid #f39c12;
-            padding: 12px; border-radius: 8px; width: 250px; z-index: 100;
-            font-size: 0.85em; color: #fff; text-align: left; line-height: 1.4;
-            transition: opacity 0.2s; pointer-events: none;
+        /* Verdict Section - PROMINENT */
+        .verdict {
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 3px solid;
+            position: relative;
+            overflow: hidden;
         }
-        .tooltip::after {
-            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -8px;
-            border: 8px solid transparent; border-top-color: #f39c12;
+        .verdict::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.1;
+            pointer-events: none;
         }
-        .stat-card:hover .tooltip { visibility: visible; opacity: 1; }
-        .tooltip strong { color: #f39c12; }
-        .tooltip .good { color: #2ecc71; }
-        .tooltip .bad { color: #e74c3c; }
         
-        .help-section {
-            background: rgba(255,255,255,0.03); border-radius: 12px; padding: 20px;
-            margin: 20px 0; border: 1px dashed rgba(243, 156, 18, 0.3);
+        /* Verdict Color Coding */
+        .verdict.skilled {
+            background: linear-gradient(135deg, #0a2a0a 0%, #1a3a1a 100%);
+            border-color: #2ecc71;
         }
-        .help-section h3 { color: #f39c12; margin-bottom: 15px; }
-        .help-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
-        .help-item { padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; }
-        .help-item h4 { color: #f39c12; font-size: 0.9em; margin-bottom: 5px; }
-        .help-item p { color: #aaa; font-size: 0.85em; line-height: 1.4; }
+        .verdict.skilled::before {
+            background: radial-gradient(circle at center, #2ecc71 0%, transparent 70%);
+        }
+        .verdict.skilled #verdictTitle {
+            color: #2ecc71;
+        }
         
+        .verdict.lucky, .verdict.inconclusive, .verdict.maybe {
+            background: linear-gradient(135deg, #2a2a0a 0%, #3a3a1a 100%);
+            border-color: #f39c12;
+        }
+        .verdict.lucky::before, .verdict.inconclusive::before, .verdict.maybe::before {
+            background: radial-gradient(circle at center, #f39c12 0%, transparent 70%);
+        }
+        .verdict.lucky #verdictTitle, .verdict.inconclusive #verdictTitle, .verdict.maybe #verdictTitle {
+            color: #f39c12;
+        }
+        
+        .verdict.arbitrage, .verdict.concerning {
+            background: linear-gradient(135deg, #2a0a0a 0%, #3a1a1a 100%);
+            border-color: #e74c3c;
+        }
+        .verdict.arbitrage::before, .verdict.concerning::before {
+            background: radial-gradient(circle at center, #e74c3c 0%, transparent 70%);
+        }
+        .verdict.arbitrage #verdictTitle, .verdict.concerning #verdictTitle {
+            color: #e74c3c;
+        }
+        
+        .verdict.insufficient {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border-color: #666;
+        }
+        .verdict.insufficient #verdictTitle {
+            color: #888;
+        }
+        
+        #verdictTitle {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        #verdictText {
+            color: #ccc;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* NEW: Calibration Score Section */
+        .calibration-section {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        .calibration-section h3 {
+            margin: 0 0 20px;
+            color: #f39c12;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .calibration-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .calibration-card {
+            background: #0f0f0f;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .calibration-card h4 {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin: 0 0 15px;
+        }
+        
+        /* Win Rate vs Confidence */
+        .confidence-meter {
+            margin-bottom: 10px;
+        }
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .confidence-bar {
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        .confidence-bar .actual {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+        .confidence-bar .marker {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: #fff;
+        }
+        .calibration-status {
+            font-size: 14px;
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .calibration-status.overconfident {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+        .calibration-status.underconfident {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+        }
+        .calibration-status.well-calibrated {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+        }
+        
+        /* Recent Streak */
+        .streak-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .streak-item {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .streak-item.win {
+            background: rgba(46, 204, 113, 0.2);
+            border: 2px solid #2ecc71;
+        }
+        .streak-item.loss {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid #e74c3c;
+        }
+        .streak-item.pending {
+            background: rgba(136, 136, 136, 0.2);
+            border: 2px solid #666;
+        }
+        .streak-summary {
+            color: #888;
+            font-size: 14px;
+        }
+        
+        /* Biggest Wins/Losses */
+        .extremes-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .extremes-list li {
+            padding: 10px;
+            background: #1a1a1a;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .extremes-list .title {
+            font-size: 13px;
+            color: #aaa;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .extremes-list .amount {
+            font-weight: bold;
+        }
+        .extremes-list .amount.win { color: #2ecc71; }
+        .extremes-list .amount.loss { color: #e74c3c; }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s;
+        }
+        .tab:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .tab.active {
+            background: #f39c12;
+            color: #000;
+        }
+        
+        /* Chart Section */
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h3 {
+            color: #f39c12;
+            margin-bottom: 15px;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .chart-container {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            height: 300px;
+        }
+        
+        /* Receipts Table */
+        .receipts-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .receipts-table th {
+            background: #2a2a2a;
+            padding: 15px;
+            text-align: left;
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .receipts-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .receipts-table tr:last-child td {
+            border-bottom: none;
+        }
+        .receipts-table .win { color: #2ecc71; }
+        .receipts-table .loss { color: #e74c3c; }
+        .receipts-table .pending { color: #f39c12; }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        @media (max-width: 900px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .calibration-grid { grid-template-columns: 1fr; }
+            .chart-grid { grid-template-columns: 1fr; }
+        }
         @media (max-width: 600px) {
-            h1 { font-size: 1.8em; }
-            .stat-value { font-size: 1.3em; }
-            .receipts-table { font-size: 0.8em; }
-            .receipts-table th, .receipts-table td { padding: 6px 3px; }
+            body { padding: 10px; }
+            .search-box input { padding: 10px; font-size: 14px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            h1 { font-size: 1.8rem; }
+            #verdictTitle { font-size: 1.3rem; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🧾 PolyReceipts</h1>
-            <p class="tagline">Show THEIR Receipts — Are famous traders skilled or just lucky?</p>
-        </header>
-
+        <h1>🐋 PolyReceipts</h1>
+        <p class="subtitle">Hold whales accountable. Separate skill from luck.</p>
+        
+        <!-- Known Whales -->
+        <div class="whale-selector">
+            <button class="whale-btn" onclick="selectWhale('swisstony')">🎾 swisstony</button>
+            <button class="whale-btn" onclick="selectWhale('theo')">🏛️ Théo</button>
+            <button class="whale-btn" onclick="selectWhale('domer')">🏈 Domer</button>
+            <button class="whale-btn" onclick="selectWhale('polytrader')">₿ PolyTrader</button>
+            <button class="whale-btn" onclick="selectWhale('cryingLittleBaby')">🚨 CryingLittleBaby</button>
+        </div>
+        
+        <!-- Search -->
         <div class="search-box">
-            <input type="text" id="walletInput" placeholder="Enter Polymarket wallet address (0x...)">
+            <input type="text" id="walletInput" placeholder="Enter wallet address (0x...)">
             <button onclick="analyzeWallet()">Analyze</button>
         </div>
-
-        <div class="whale-select">
-            <span style="color: #888; margin-right: 10px;">Quick lookup:</span>
-            <button class="whale-btn" onclick="selectWhale('swisstony')">🐋 swisstony</button>
-            <button class="whale-btn" onclick="selectWhale('theo')">🐳 Théo ($85M)</button>
-            <button class="whale-btn" onclick="selectWhale('domer')">🦈 Domer</button>
-            <button class="whale-btn arbitrage" onclick="selectWhale('cryingLittleBaby')">🚨 CRYINGLITTLEBABY</button>
-            <button class="whale-btn" onclick="selectWhale('leJoe')">🌍 LeJoe</button>
-            <button class="whale-btn" onclick="selectWhale('jacobjhu')">📈 jacobjhu</button>
-            <button class="whale-btn" onclick="selectWhale('arcticMigration')">🧊 Arctic-Migration</button>
-        </div>
-
-        <div id="loading" class="loading hidden">
+        
+        <!-- Loading -->
+        <div id="loading" class="hidden">
             <div class="spinner"></div>
-            <p>Analyzing whale's trade history...</p>
+            <p>Fetching on-chain data...</p>
         </div>
-
+        
+        <!-- Results -->
         <div id="results" class="hidden">
-            <div id="whaleDescription" class="whale-description hidden"></div>
-            <div id="verdict" class="verdict">
-                <h3 id="verdictTitle">⚠️ VERDICT: Insufficient Data</h3>
-                <p id="verdictText">Need more resolved trades to determine skill vs luck.</p>
+            <!-- Data Timestamp -->
+            <div class="data-timestamp">
+                Data last fetched: <span id="fetchTimestamp">--</span>
             </div>
+            
+            <!-- Whale Description -->
+            <div id="whaleDescription" class="hidden"></div>
+            
+            <!-- VERDICT - PROMINENT -->
+            <div id="verdict" class="verdict">
+                <div id="verdictTitle">Loading...</div>
+                <div id="verdictText"></div>
+            </div>
+            
+            <!-- NEW: Calibration Score Section -->
+            <div class="calibration-section">
+                <h3>📊 Calibration Analysis</h3>
+                <div class="calibration-grid">
+                    <!-- Win Rate vs Confidence -->
+                    <div class="calibration-card">
+                        <h4>Win Rate vs Confidence</h4>
+                        <div id="confidenceAnalysis">
+                            <div class="confidence-meter">
+                                <div class="confidence-label">
+                                    <span>Avg Confidence: <strong id="avgConfidence">--</strong></span>
+                                    <span>Actual Win Rate: <strong id="actualWinRate">--</strong></span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="actual" id="winRateBar" style="width: 0%; background: #f39c12;"></div>
+                                    <div class="marker" id="confidenceMarker" style="left: 0%;"></div>
+                                </div>
+                            </div>
+                            <div id="calibrationStatus" class="calibration-status">Calculating...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Streak -->
+                    <div class="calibration-card">
+                        <h4>Recent Streak (Last 5)</h4>
+                        <div class="streak-container" id="recentStreak">
+                            <!-- Filled by JS -->
+                        </div>
+                        <div class="streak-summary" id="streakSummary">--</div>
+                    </div>
+                    
+                    <!-- Biggest Wins/Losses -->
+                    <div class="calibration-card">
+                        <h4>Biggest Wins & Losses</h4>
+                        <ul class="extremes-list" id="extremesList">
+                            <!-- Filled by JS -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-value" id="totalPnL">$0</div>
-                    <div class="stat-label">Realized P&L</div>
-                    <div class="tooltip"><strong>Profit & Loss</strong><br>Total money made or lost from resolved bets. <span class="good">Green = profitable</span>, <span class="bad">Red = losing money</span>.</div>
+                    <div class="stat-label">Total P&L (Realized)</div>
+                    <div class="stat-value" id="totalPnL">--</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="roi">0%</div>
                     <div class="stat-label">ROI</div>
-                    <div class="tooltip"><strong>Return on Investment</strong><br>Profit as % of amount wagered. <span class="good">10%+ is excellent</span>. <span class="bad">Negative = losing money</span>.</div>
+                    <div class="stat-value" id="roi">--</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="winRate">0%</div>
-                    <div class="stat-label">Win Rate</div>
-                    <div class="tooltip"><strong>Win Rate</strong><br>% of bets that won. <span class="good">60%+ suggests skill</span>. Note: 50% ≠ random due to odds variations.</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="brierScore">0.00</div>
-                    <div class="stat-label">Brier Score</div>
-                    <div class="tooltip"><strong>Brier Score</strong><br>Measures prediction accuracy. <span class="good">0 = perfect</span>. 0.25 = random guessing. <span class="bad">Higher = worse</span>. Formula: mean((predicted - actual)²)</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="calibrationScore">0%</div>
-                    <div class="stat-label">Calibration</div>
-                    <div class="tooltip"><strong>Calibration Score</strong><br>Does confidence match reality? If you bet at 70% odds and win 70% of those, you're calibrated. <span class="good">100% = perfect calibration</span>.</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalTrades">0</div>
-                    <div class="stat-label">Positions</div>
-                    <div class="tooltip"><strong>Total Positions</strong><br>Number of distinct bets/trades. More positions = more data to assess skill vs luck.</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalWagered">$0</div>
                     <div class="stat-label">Total Wagered</div>
-                    <div class="tooltip"><strong>Total Amount Wagered</strong><br>Sum of all bet sizes. Larger traders have more at stake but may also size based on confidence.</div>
+                    <div class="stat-value neutral" id="totalWagered">--</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="tradesNeeded">∞</div>
-                    <div class="stat-label">Trades to p&lt;0.05</div>
-                    <div class="tooltip"><strong>Statistical Significance</strong><br>Trades needed to confidently say this isn't luck (p&lt;0.05). <span class="good">Lower = stronger evidence of skill</span>.</div>
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-value" id="winRate">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Brier Score</div>
+                    <div class="stat-value" id="brierScore">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Calibration</div>
+                    <div class="stat-value" id="calibrationScore">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Trades</div>
+                    <div class="stat-value neutral" id="totalTrades">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Trades for Significance</div>
+                    <div class="stat-value" id="tradesNeeded">--</div>
                 </div>
             </div>
             
-            <!-- How to Read This Section -->
-            <details class="help-section">
-                <summary style="cursor: pointer; color: #f39c12; font-weight: bold;">📖 How to Read These Metrics (click to expand)</summary>
-                <div class="help-grid" style="margin-top: 15px;">
-                    <div class="help-item">
-                        <h4>🎯 Brier Score</h4>
-                        <p>Measures prediction accuracy. <strong>0 = perfect</strong>, 0.25 = random guessing, 1 = always wrong. Lower is better. A skilled trader should score below 0.2.</p>
-                    </div>
-                    <div class="help-item">
-                        <h4>📊 Calibration Score</h4>
-                        <p>Do they know what they don't know? If someone bets at 70% implied odds, they should win ~70% of those. <strong>100% = perfectly calibrated</strong>. Overconfident traders score low.</p>
-                    </div>
-                    <div class="help-item">
-                        <h4>💰 Win Rate vs ROI</h4>
-                        <p>Win rate alone is misleading — a 90% win rate on -900 odds is expected. <strong>ROI (return on investment)</strong> accounts for odds and is the true measure of profitability.</p>
-                    </div>
-                    <div class="help-item">
-                        <h4>🎲 Skill vs Luck (p-value)</h4>
-                        <p>"Trades to p<0.05" shows how many more bets needed to statistically prove skill. <strong>Fewer = stronger evidence</strong>. Many "whales" need 100+ more trades to prove they're not just lucky.</p>
-                    </div>
-                </div>
-            </details>
-            
+            <!-- Tabs -->
             <div class="tabs">
-                <button class="tab active" onclick="showTab('calibration')">📊 Calibration</button>
-                <button class="tab" onclick="showTab('receipts')">🧾 Receipts</button>
-                <button class="tab" onclick="showTab('categories')">📈 Categories</button>
-                <button class="tab" onclick="showTab('timeline')">📅 Timeline</button>
+                <button class="tab active" onclick="showTab('calibration')">📈 Charts</button>
+                <button class="tab" onclick="showTab('receipts')">🧾 All Receipts</button>
             </div>
+            
+            <!-- Calibration Tab -->
             <div id="calibration-tab" class="section">
-                <h2>Calibration Curve</h2>
-                <p style="color: #888; margin-bottom: 15px;">Does confidence match outcomes? Perfect = diagonal line.</p>
-                <div class="chart-container">
-                    <canvas id="calibrationChart"></canvas>
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <canvas id="calibrationChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
                 </div>
-                <div class="tooltip hidden" id="calibrationTooltip">Calibration Score: <span id='calibrationScoreValue'></span></div>
-            </div>
-            <div id="receipts-tab" class="section hidden">
-                <h2>🧾 The Receipts</h2>
-                <p style="color: #888; margin-bottom: 15px;">Every bet, every outcome. No hiding.</p>
-                <table class="receipts-table">
-                    <thead>
-                        <tr><th>Market</th><th>Position</th><th>Size</th><th>Entry</th><th>Result</th><th>P&L</th></tr>
-                    </thead>
-                    <tbody id="receiptsBody"></tbody>
-                </table>
-            </div>
-            <div id="categories-tab" class="section hidden">
-                <h2>Performance by Category</h2>
-                <p style="color: #888; margin-bottom: 15px;">Where does this whale actually have edge (if any)?</p>
-                <div class="chart-container">
-                    <canvas id="categoryChart"></canvas>
-                </div>
-                <div class="tooltip hidden" id="categoryTooltip">Win Rate by Category: <span id='winRateValue'></span></div>
-            </div>
-            <div id="timeline-tab" class="section hidden">
-                <h2>Cumulative P&L Over Time</h2>
-                <p style="color: #888; margin-bottom: 15px;">One lucky trade or consistent edge?</p>
-                <div class="chart-container">
+                <div class="chart-container" style="margin-top: 20px; height: 250px;">
                     <canvas id="timelineChart"></canvas>
                 </div>
-                <div class="tooltip hidden" id="timelineTooltip">Cumulative P&L: <span id='pnlValue'></span></div>
+            </div>
+            
+            <!-- Receipts Tab -->
+            <div id="receipts-tab" class="section hidden">
+                <table class="receipts-table">
+                    <thead>
+                        <tr>
+                            <th>Market</th>
+                            <th>Position</th>
+                            <th>Size</th>
+                            <th>Entry</th>
+                            <th>Result</th>
+                            <th>P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody id="receiptsBody">
+                    </tbody>
+                </table>
             </div>
         </div>
-        <footer style="text-align: center; padding: 40px; color: #666;">
-            <p>Built by <a href="https://github.com/ezra-anchovy/polyreceipts" style="color: #f39c12;">@EzraAnchovy</a></p>
-            <p style="font-size: 0.8em; margin-top: 10px;">Whale accountability. Show their receipts. 🧾</p>
-        </footer>
     </div>
+    
+    <!-- Scripts -->
     <script src="whales.js"></script>
     <script src="analysis.js"></script>
-    <script src="app.js"></script>
+    <script>
+        // PolyReceipts App - Main Application Logic
+        
+        let currentWhale = null;
+        let charts = {};
+        
+        // Helper: categorize position
+        function categorizePosition(title) {
+            title = title.toLowerCase();
+            if (title.includes('trump') || title.includes('biden') || title.includes('election') || 
+                title.includes('congress') || title.includes('senate') || title.includes('gop') ||
+                title.includes('democrat') || title.includes('harris') || title.includes('republican')) {
+                return 'Politics';
+            }
+            if (title.includes('btc') || title.includes('eth') || title.includes('bitcoin') || 
+                title.includes('crypto') || title.includes('sol') || title.includes('doge') ||
+                title.includes('solana') || title.includes('ethereum')) {
+                return 'Crypto';
+            }
+            if (title.includes('nfl') || title.includes('nba') || title.includes('mlb') ||
+                title.includes('chiefs') || title.includes('lakers') || title.includes('celtics') ||
+                title.includes('tennis') || title.includes('soccer') || title.includes('fc ') ||
+                title.includes('win on') || title.includes('super bowl') || title.includes('vs.') ||
+                title.includes(' vs ')) {
+                return 'Sports';
+            }
+            if (title.includes('fed') || title.includes('rate') || title.includes('recession') ||
+                title.includes('gdp') || title.includes('inflation') || title.includes('s&p')) {
+                return 'Economics';
+            }
+            return 'Other';
+        }
+        
+        // Select a known whale
+        function selectWhale(whaleId) {
+            const whale = KNOWN_WHALES[whaleId];
+            if (!whale) {
+                alert('Whale not found!');
+                return;
+            }
+            document.getElementById('walletInput').value = whale.wallet;
+            // Update button states
+            document.querySelectorAll('.whale-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            analyzeWhale(whale);
+        }
+        
+        // Analyze from wallet input
+        function analyzeWallet() {
+            const wallet = document.getElementById('walletInput').value.trim();
+            if (!wallet) {
+                alert('Please enter a wallet address');
+                return;
+            }
+            // Check if it's a known whale
+            for (const [id, whale] of Object.entries(KNOWN_WHALES)) {
+                if (whale.wallet.toLowerCase() === wallet.toLowerCase()) {
+                    analyzeWhale(whale);
+                    return;
+                }
+            }
+            // Unknown wallet
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('loading').classList.add('hidden');
+                alert('Wallet not in our database yet. Try one of the known whales!');
+            }, 1500);
+        }
+        
+        // Main analysis function
+        function analyzeWhale(whale) {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            
+            setTimeout(() => {
+                currentWhale = whale;
+                
+                // Calculate all stats
+                const pnl = calculatePnL(whale.positions);
+                const winRateData = calculateWinRate(whale.positions);
+                const brier = calculateBrierScore(whale.positions);
+                const calibration = calculateCalibration(whale.positions);
+                const tradesNeeded = calculateTradesNeeded(whale.positions);
+                
+                // Generate verdict
+                let verdict;
+                if (whale.isArbitrageur) {
+                    verdict = {
+                        verdict: 'arbitrage',
+                        title: '🚨 VERDICT: Arbitrageur, NOT Skilled Predictor',
+                        text: `This whale profits from latency arbitrage (exploiting price delays between Binance and Polymarket), not prediction skill. ${winRateData ? winRateData.winRate.toFixed(0) + '% win rate' : ''} with rapid-fire trades proves they're NOT forecasting - they're front-running.`,
+                        confident: true
+                    };
+                } else {
+                    verdict = generateVerdict(whale.positions);
+                }
+                
+                // Update UI
+                updateTimestamp();
+                showWhaleDescription(whale);
+                updateVerdict(verdict, whale.isArbitrageur);
+                updateCalibrationSection(whale.positions, pnl, winRateData, calibration);
+                updateStats(pnl, winRateData, brier, calibration, tradesNeeded);
+                updateCharts(whale.positions, calibration);
+                updateReceipts(whale.positions);
+                
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('results').classList.remove('hidden');
+            }, 800);
+        }
+        
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('fetchTimestamp').textContent = 
+                now.toLocaleString('en-US', { 
+                    month: 'short', day: 'numeric', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+        }
+        
+        // Show whale description
+        function showWhaleDescription(whale) {
+            const descEl = document.getElementById('whaleDescription');
+            if (whale.description) {
+                descEl.textContent = `${whale.name}: ${whale.description}`;
+                descEl.classList.remove('hidden');
+            } else {
+                descEl.classList.add('hidden');
+            }
+        }
+        
+        // Update verdict display with color coding
+        function updateVerdict(verdict, isArbitrageur = false) {
+            const verdictDiv = document.getElementById('verdict');
+            
+            // Remove all verdict classes
+            verdictDiv.className = 'verdict';
+            
+            // Add appropriate class based on verdict
+            if (verdict.verdict === 'skilled') {
+                verdictDiv.classList.add('skilled');
+            } else if (isArbitrageur || verdict.verdict === 'arbitrage') {
+                verdictDiv.classList.add('arbitrage');
+            } else if (verdict.verdict === 'lucky' || verdict.verdict === 'inconclusive' || verdict.verdict === 'maybe') {
+                verdictDiv.classList.add(verdict.verdict);
+            } else if (verdict.verdict === 'insufficient') {
+                verdictDiv.classList.add('insufficient');
+            }
+            
+            document.getElementById('verdictTitle').textContent = verdict.title;
+            document.getElementById('verdictText').textContent = verdict.text;
+        }
+        
+        // NEW: Update Calibration Section
+        function updateCalibrationSection(positions, pnl, winRateData, calibration) {
+            const resolved = Object.values(positions).filter(p => p.resolved);
+            
+            // 1. Win Rate vs Confidence
+            if (resolved.length > 0) {
+                const avgConfidence = resolved.reduce((sum, p) => sum + p.avgPrice, 0) / resolved.length * 100;
+                const actualWinRate = winRateData ? winRateData.winRate : 0;
+                
+                document.getElementById('avgConfidence').textContent = avgConfidence.toFixed(0) + '%';
+                document.getElementById('actualWinRate').textContent = actualWinRate.toFixed(0) + '%';
+                
+                // Update bar visualization
+                const winRateBar = document.getElementById('winRateBar');
+                const confidenceMarker = document.getElementById('confidenceMarker');
+                
+                winRateBar.style.width = actualWinRate + '%';
+                confidenceMarker.style.left = avgConfidence + '%';
+                
+                // Determine calibration status
+                const diff = actualWinRate - avgConfidence;
+                const statusEl = document.getElementById('calibrationStatus');
+                
+                if (Math.abs(diff) < 5) {
+                    statusEl.textContent = '✓ Well Calibrated';
+                    statusEl.className = 'calibration-status well-calibrated';
+                    winRateBar.style.background = '#2ecc71';
+                } else if (diff > 5) {
+                    statusEl.textContent = '↑ Underconfident (wins more than expected)';
+                    statusEl.className = 'calibration-status underconfident';
+                    winRateBar.style.background = '#2ecc71';
+                } else {
+                    statusEl.textContent = '↓ Overconfident (wins less than expected)';
+                    statusEl.className = 'calibration-status overconfident';
+                    winRateBar.style.background = '#e74c3c';
+                }
+            }
+            
+            // 2. Recent Streak (last 5 resolved)
+            const streakContainer = document.getElementById('recentStreak');
+            const recentResolved = resolved.slice(-5);
+            streakContainer.innerHTML = '';
+            
+            let wins = 0, losses = 0;
+            for (const pos of recentResolved) {
+                const item = document.createElement('div');
+                item.className = 'streak-item ' + (pos.won ? 'win' : 'loss');
+                item.textContent = pos.won ? '✓' : '✗';
+                item.title = pos.title;
+                streakContainer.appendChild(item);
+                if (pos.won) wins++;
+                else losses++;
+            }
+            
+            // Fill remaining slots if less than 5
+            for (let i = recentResolved.length; i < 5; i++) {
+                const item = document.createElement('div');
+                item.className = 'streak-item pending';
+                item.textContent = '?';
+                streakContainer.appendChild(item);
+            }
+            
+            const streakSummary = document.getElementById('streakSummary');
+            if (recentResolved.length > 0) {
+                const streak = wins > losses ? `${wins}W-${losses}L` : `${losses}L-${wins}W`;
+                const hot = wins >= 4 ? '🔥 Hot streak!' : wins <= 1 ? '❄️ Cold streak' : '';
+                streakSummary.textContent = `Recent: ${streak} ${hot}`;
+            } else {
+                streakSummary.textContent = 'No resolved trades yet';
+            }
+            
+            // 3. Biggest Wins/Losses
+            const extremesList = document.getElementById('extremesList');
+            extremesList.innerHTML = '';
+            
+            if (pnl.biggestWin && pnl.biggestWin.pnl > 0) {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="title" title="${pnl.biggestWin.title}">🏆 ${pnl.biggestWin.title}</span>
+                    <span class="amount win">+$${formatMoney(pnl.biggestWin.pnl)}</span>
+                `;
+                extremesList.appendChild(li);
+            }
+            
+            if (pnl.biggestLoss && pnl.biggestLoss.pnl < 0) {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="title" title="${pnl.biggestLoss.title}">💀 ${pnl.biggestLoss.title}</span>
+                    <span class="amount loss">-$${formatMoney(Math.abs(pnl.biggestLoss.pnl))}</span>
+                `;
+                extremesList.appendChild(li);
+            }
+            
+            if (extremesList.children.length === 0) {
+                extremesList.innerHTML = '<li><span class="title">No resolved trades yet</span></li>';
+            }
+        }
+        
+        // Update stat cards
+        function updateStats(pnl, winRate, brier, calibration, tradesNeeded) {
+            // P&L (realized)
+            const pnlEl = document.getElementById('totalPnL');
+            pnlEl.textContent = (pnl.realized >= 0 ? '+$' : '-$') + formatMoney(Math.abs(pnl.realized));
+            pnlEl.className = 'stat-value ' + (pnl.realized >= 0 ? 'positive' : 'negative');
+            
+            // ROI
+            const roiEl = document.getElementById('roi');
+            roiEl.textContent = (pnl.roi >= 0 ? '+' : '') + pnl.roi.toFixed(1) + '%';
+            roiEl.className = 'stat-value ' + (pnl.roi >= 0 ? 'positive' : 'negative');
+            
+            // Total Wagered
+            document.getElementById('totalWagered').textContent = '$' + formatMoney(pnl.totalWagered);
+            
+            // Win Rate
+            const wrEl = document.getElementById('winRate');
+            if (winRate) {
+                wrEl.textContent = winRate.winRate.toFixed(1) + '%';
+                wrEl.className = 'stat-value ' + (winRate.winRate >= 50 ? 'positive' : 'negative');
+            } else {
+                wrEl.textContent = 'N/A';
+                wrEl.className = 'stat-value neutral';
+            }
+            
+            // Brier Score
+            const brierEl = document.getElementById('brierScore');
+            if (brier !== null) {
+                brierEl.textContent = brier.toFixed(3);
+                brierEl.className = 'stat-value ' + (brier < 0.20 ? 'positive' : brier < 0.25 ? 'neutral' : 'negative');
+            } else {
+                brierEl.textContent = 'N/A';
+                brierEl.className = 'stat-value neutral';
+            }
+            
+            // Calibration
+            const calEl = document.getElementById('calibrationScore');
+            if (calibration) {
+                calEl.textContent = calibration.score.toFixed(0) + '%';
+                calEl.className = 'stat-value ' + (calibration.score >= 60 ? 'positive' : calibration.score >= 40 ? 'neutral' : 'negative');
+            } else {
+                calEl.textContent = 'N/A';
+                calEl.className = 'stat-value neutral';
+            }
+            
+            // Total Trades
+            document.getElementById('totalTrades').textContent = Object.keys(currentWhale.positions).length;
+            
+            // Trades Needed
+            const tnEl = document.getElementById('tradesNeeded');
+            if (tradesNeeded === Infinity || tradesNeeded > 9999) {
+                tnEl.textContent = '∞';
+                tnEl.className = 'stat-value negative';
+            } else if (tradesNeeded === 0) {
+                tnEl.textContent = '✓';
+                tnEl.className = 'stat-value positive';
+            } else {
+                tnEl.textContent = tradesNeeded;
+                tnEl.className = 'stat-value ' + (tradesNeeded < 100 ? 'neutral' : 'negative');
+            }
+        }
+        
+        // Update all charts
+        function updateCharts(positions, calibration) {
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+            
+            // Calibration Chart
+            if (calibration) {
+                const ctx = document.getElementById('calibrationChart').getContext('2d');
+                charts.calibration = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: calibration.buckets.map(b => b.label),
+                        datasets: [
+                            {
+                                label: 'Actual Win Rate',
+                                data: calibration.buckets.map(b => 
+                                    b.predictions.length > 0 ? (b.wins / b.predictions.length * 100) : 0
+                                ),
+                                backgroundColor: 'rgba(243, 156, 18, 0.7)',
+                                borderColor: '#f39c12',
+                                borderWidth: 2
+                            },
+                            {
+                                label: 'Perfect Calibration',
+                                data: [10, 30, 50, 70, 90],
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                borderColor: 'rgba(255, 255, 255, 0.5)',
+                                borderWidth: 2,
+                                type: 'line'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: { display: true, text: 'Win Rate %', color: '#888' },
+                                ticks: { color: '#888' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            },
+                            x: {
+                                title: { display: true, text: 'Confidence Level', color: '#888' },
+                                ticks: { color: '#888' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { labels: { color: '#fff' } }
+                        }
+                    }
+                });
+            }
+            
+            // Category Chart
+            const categories = getPerformanceByCategory(positions);
+            const catLabels = Object.keys(categories);
+            const catWinRates = catLabels.map(cat => {
+                const data = categories[cat];
+                return data.wins / (data.wins + data.losses) * 100;
+            });
+            
+            if (catLabels.length > 0) {
+                const catCtx = document.getElementById('categoryChart').getContext('2d');
+                charts.category = new Chart(catCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: catLabels,
+                        datasets: [{
+                            label: 'Win Rate by Category',
+                            data: catWinRates,
+                            backgroundColor: catWinRates.map(wr => 
+                                wr >= 55 ? 'rgba(46, 204, 113, 0.7)' : 
+                                wr >= 45 ? 'rgba(243, 156, 18, 0.7)' : 
+                                'rgba(231, 76, 60, 0.7)'
+                            ),
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: { display: true, text: 'Win Rate %', color: '#888' },
+                                ticks: { color: '#888' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            },
+                            x: {
+                                ticks: { color: '#888' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+            
+            // Timeline Chart
+            const resolved = Object.values(positions).filter(p => p.resolved);
+            let cumulative = 0;
+            const timelineData = resolved.map((pos, i) => {
+                if (pos.won) {
+                    cumulative += pos.size * (1 - pos.avgPrice);
+                } else {
+                    cumulative -= pos.size * pos.avgPrice;
+                }
+                return cumulative;
+            });
+            
+            if (timelineData.length > 0) {
+                const tlCtx = document.getElementById('timelineChart').getContext('2d');
+                charts.timeline = new Chart(tlCtx, {
+                    type: 'line',
+                    data: {
+                        labels: resolved.map((_, i) => `Trade ${i + 1}`),
+                        datasets: [{
+                            label: 'Cumulative P&L',
+                            data: timelineData,
+                            borderColor: timelineData[timelineData.length - 1] >= 0 ? '#2ecc71' : '#e74c3c',
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                title: { display: true, text: 'P&L ($)', color: '#888' },
+                                ticks: { color: '#888' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            },
+                            x: {
+                                ticks: { color: '#888', maxTicksLimit: 10 },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Update receipts table
+        function updateReceipts(positions) {
+            const tbody = document.getElementById('receiptsBody');
+            tbody.innerHTML = '';
+            
+            const posArray = Object.entries(positions).sort((a, b) => {
+                if (a[1].resolved !== b[1].resolved) return a[1].resolved ? -1 : 1;
+                return b[1].size - a[1].size;
+            });
+            
+            let totalWins = 0, totalLosses = 0, totalPending = 0;
+            let winPnL = 0, lossPnL = 0;
+            
+            for (const [key, pos] of posArray) {
+                const tr = document.createElement('tr');
+                let pnl = 0;
+                let resultClass = 'pending';
+                let resultText = '⏳';
+                const cost = pos.size * pos.avgPrice;
+                
+                if (pos.resolved) {
+                    if (pos.won) {
+                        pnl = pos.size - cost;
+                        resultClass = 'win';
+                        resultText = '✅';
+                        totalWins++;
+                        winPnL += pnl;
+                    } else {
+                        pnl = -cost;
+                        resultClass = 'loss';
+                        resultText = '❌';
+                        totalLosses++;
+                        lossPnL += pnl;
+                    }
+                } else {
+                    pnl = pos.size * pos.curPrice - cost;
+                    totalPending++;
+                }
+                
+                const category = categorizePosition(pos.title);
+                const catEmoji = {
+                    'Politics': '🗳️',
+                    'Sports': '⚽',
+                    'Crypto': '₿',
+                    'Economics': '📊',
+                    'Other': '📌'
+                }[category] || '📌';
+                
+                tr.innerHTML = `
+                    <td title="${pos.title}">${catEmoji} ${pos.title.substring(0, 35)}${pos.title.length > 35 ? '...' : ''}</td>
+                    <td><strong>${pos.outcome}</strong></td>
+                    <td>$${formatMoney(pos.size)}</td>
+                    <td>${(pos.avgPrice * 100).toFixed(0)}¢</td>
+                    <td class="${resultClass}">${resultText}</td>
+                    <td class="${pnl >= 0 ? 'win' : 'loss'}">${pnl >= 0 ? '+' : ''}$${formatMoney(Math.abs(pnl))}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+            
+            // Summary row
+            const summaryRow = document.createElement('tr');
+            summaryRow.style.borderTop = '2px solid #f39c12';
+            summaryRow.style.fontWeight = 'bold';
+            const netPnL = winPnL + lossPnL;
+            summaryRow.innerHTML = `
+                <td colspan="2">TOTAL: ${totalWins}W / ${totalLosses}L / ${totalPending}P</td>
+                <td colspan="2"></td>
+                <td></td>
+                <td class="${netPnL >= 0 ? 'win' : 'loss'}">${netPnL >= 0 ? '+' : ''}$${formatMoney(Math.abs(netPnL))}</td>
+            `;
+            tbody.appendChild(summaryRow);
+        }
+        
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            event.target.classList.add('active');
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('calibration-tab').classList.remove('hidden');
+        });
+    </script>
 </body>
 </html>
