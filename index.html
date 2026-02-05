@@ -578,31 +578,58 @@
         .share-btn {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
-            padding: 20px 48px;
-            border-radius: 16px;
+            padding: 22px 56px;
+            border-radius: 50px;
             border: none;
-            font-weight: 800;
-            font-size: 20px;
+            font-weight: 900;
+            font-size: 22px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
         .share-btn.twitter {
-            background: linear-gradient(135deg, #1DA1F2 0%, #0d8ddb 100%);
+            background: #1DA1F2;
             color: #fff;
-            box-shadow: 0 6px 30px rgba(29, 161, 242, 0.5);
-            animation: share-pulse 1.5s infinite;
+            box-shadow: 0 10px 40px rgba(29, 161, 242, 0.5);
         }
         .share-btn.twitter:hover {
-            background: linear-gradient(135deg, #0d8ddb 0%, #0a7cc4 100%);
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 30px rgba(29, 161, 242, 0.6);
+            background: #0d95e8;
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 50px rgba(29, 161, 242, 0.7);
         }
         @keyframes share-pulse {
-            0%, 100% { box-shadow: 0 4px 20px rgba(29, 161, 242, 0.4); }
-            50% { box-shadow: 0 4px 30px rgba(29, 161, 242, 0.7); }
+            0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(29, 161, 242, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 10px 50px rgba(29, 161, 242, 0.8); }
+        }
+        .share-btn.twitter.pulse {
+            animation: share-pulse 2s infinite;
+        }
+        
+        /* Sticky Mobile Share */
+        .sticky-share-mobile {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        @media (max-width: 600px) {
+            .sticky-share-mobile {
+                display: block;
+            }
+            .share-btn { 
+                width: 100%; 
+                padding: 18px 24px;
+                font-size: 18px;
+            }
         }
         .share-btn.copy {
             background: #333;
@@ -808,7 +835,7 @@
         <!-- Quick Share CTA -->
         <div class="quick-share-banner">
             <span class="qs-text">📢 Expose fake gurus to your followers</span>
-            <button class="share-btn twitter" onclick="shareToTwitter()" style="animation: share-pulse 2s infinite;">
+            <button class="share-btn twitter pulse" onclick="shareToTwitter()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                 Share on X
             </button>
@@ -990,7 +1017,36 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Methodology Section -->
+            <div class="methodology">
+                <h3>🧪 How We Calculate Skill</h3>
+                <p>We don't just look at profit. A lucky gambler can make millions on a coin flip. We use <strong>Brier Scores</strong> to measure true forecasting skill.</p>
+                
+                <div class="methodology-grid">
+                    <div class="meth-card">
+                        <h4>What is a Brier Score?</h4>
+                        <p>It measures the distance between a trader's confidence (the price they paid) and the actual outcome. 
+                           If you pay 80¢ (80% confidence) and the event happens, you get a good score. 
+                           If you pay 80¢ and it fails, your score is penalized heavily.</p>
+                    </div>
+                    <div class="meth-card">
+                        <h4>Skill Ratings</h4>
+                        <p><strong>Pro (&lt; 0.15):</strong> Consistent edge, disciplined entries.<br>
+                           <strong>Good (0.15 - 0.25):</strong> Profitable, but takes some high-variance bets.<br>
+                           <strong>Amateur (&gt; 0.25):</strong> No detectable edge; performance is worse than random guessing.</p>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
+    
+    <!-- Sticky Mobile Share -->
+    <div class="sticky-share-mobile">
+        <button class="share-btn twitter pulse" onclick="shareToTwitter()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            Share on X
+        </button>
     </div>
     
     <!-- Scripts -->
@@ -1277,8 +1333,20 @@
             // Brier Score
             const brierEl = document.getElementById('brierScore');
             if (brier !== null) {
-                brierEl.textContent = brier.toFixed(3);
-                brierEl.className = 'stat-value ' + (brier < 0.20 ? 'positive' : brier < 0.25 ? 'neutral' : 'negative');
+                let label = "";
+                let classLabel = "";
+                if (brier < 0.15) {
+                    label = " (Pro)";
+                    classLabel = "pro";
+                } else if (brier <= 0.25) {
+                    label = " (Good)";
+                    classLabel = "good";
+                } else {
+                    label = " (Amateur)";
+                    classLabel = "amateur";
+                }
+                brierEl.textContent = brier.toFixed(3) + label;
+                brierEl.className = 'stat-value ' + classLabel;
             } else {
                 brierEl.textContent = 'N/A';
                 brierEl.className = 'stat-value neutral';
@@ -1550,6 +1618,32 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('calibration-tab').classList.remove('hidden');
         });
+
+        // Sharing Functions
+        function shareToTwitter() {
+            const whaleName = currentWhale ? currentWhale.name : 'this whale';
+            const pnl = document.getElementById('totalPnL').textContent || '$0';
+            const wr = document.getElementById('winRate').textContent || '0%';
+            
+            // Spicy share text per v4 critique
+            const text = `Just checked @${whaleName} on PolyReceipts. ${pnl} profit but only a ${wr} win rate? 🚨 EXPOSED.`;
+            
+            const url = window.location.href;
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+            window.open(twitterUrl, '_blank');
+        }
+
+        function copyShareLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = event.target.closest('.share-btn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            });
+        }
     </script>
 </body>
 </html>
