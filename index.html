@@ -1323,7 +1323,14 @@
             // Win Rate
             const wrEl = document.getElementById('winRate');
             if (winRate) {
-                wrEl.textContent = winRate.winRate.toFixed(1) + '%';
+                const p = winRate.winRate / 100;
+                const n = winRate.count;
+                let ciText = "";
+                if (n > 0) {
+                    const ci = 1.96 * Math.sqrt((p * (1 - p)) / n) * 100;
+                    ciText = `<span style="font-size: 14px; font-weight: normal; color: #888; margin-left: 5px;">± ${ci.toFixed(1)}%</span>`;
+                }
+                wrEl.innerHTML = winRate.winRate.toFixed(1) + '%' + ciText;
                 wrEl.className = 'stat-value ' + (winRate.winRate >= 50 ? 'positive' : 'negative');
             } else {
                 wrEl.textContent = 'N/A';
@@ -1575,11 +1582,11 @@
                 const category = categorizePosition(pos.title);
                 const catEmoji = {
                     'Politics': '🗳️',
-                    'Sports': '⚽',
+                    'Sports': '🏀',
                     'Crypto': '₿',
-                    'Economics': '📊',
-                    'Other': '📌'
-                }[category] || '📌';
+                    'Economics': '📉',
+                    'Other': '🎬'
+                }[category] || '🎬';
                 
                 tr.innerHTML = `
                     <td title="${pos.title}">${catEmoji} ${pos.title.substring(0, 35)}${pos.title.length > 35 ? '...' : ''}</td>
