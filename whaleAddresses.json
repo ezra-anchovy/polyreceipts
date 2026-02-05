@@ -1,1 +1,21 @@
-[{"whale":"whale1","address":"0x123..."},{"whale":"whale2","address":"0x456..."}]
+[
+  {"whale": "Theo4", "address": "0x56687bf447db6ffa42ffe2204a05edaa20f55839"},
+  {"whale": "Fredi9999", "address": "0x1f2dd6d473f3e824cd2f8a89d9c69fb96f6ad0cf"},
+  {"whale": "kch123", "address": "0x6a72f61820b26b1fe4d956e17b6dc2a1ea3033ee"},
+  {"whale": "Len9311238", "address": "0x78b9ac44a6d7d7a076c14e0ad518b301b63c6b76"},
+  {"whale": "zxgngl", "address": "0xd235973291b2b75ff4070e9c0b01728c520b0f29"},
+  {"whale": "RepTrump", "address": "0x863134d00841b2e200492805a01e1e2f5defaa53"},
+  {"whale": "PrincessCaro", "address": "0x8119010a6e589062aa03583bb3f39ca632d9f887"},
+  {"whale": "walletmobile", "address": "0xe9ad918c7678cd38b12603a762e638a5d1ee7091"},
+  {"whale": "BetTom42", "address": "0x885783760858e1bd5dd09a3c3f916cfa251ac270"},
+  {"whale": "432614799197", "address": "0xdc876e6873772d38716fda7f2452a78d426d7ab6"},
+  {"whale": "mikatrade77", "address": "0x23786fdad0073692157c6d7dc81f281843a35fcb"},
+  {"whale": "gmanas", "address": "0xe90bec87d9ef430f27f9dcfe72c34b76967d5da2"},
+  {"whale": "alexmulti", "address": "0xd0c042c08f755ff940249f62745e82d356345565"},
+  {"whale": "GCottrell93", "address": "0x94a428cfa4f84b264e01f70d93d02bc96cb36356"},
+  {"whale": "DrPufferfish", "address": "0xdb27bf2ac5d428a9c63dbc914611036855a6c56e"},
+  {"whale": "RN1", "address": "0x2005d16a84ceefa912d4e380cd32e7ff827875ea"},
+  {"whale": "Jenzigo", "address": "0x16f91db2592924cfed6e03b7e5cb5bb1e32299e3"},
+  {"whale": "swisstony", "address": "0x204f72f35326db932158cba6adff0b9a1da95e14"},
+  {"whale": "SeriouslySirius", "address": "0x16b29c50f2439faf627209b2ac0c7bbddaa8a881"}
+]
